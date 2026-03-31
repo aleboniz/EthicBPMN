@@ -2,3 +2,9 @@
 __pycache__/
 *.pyc
 .vscode/
+
+# Ambienti virtuali
+venv/
+
+# FILE DI OUTPUT
+ethic_report.md
