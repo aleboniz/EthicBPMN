@@ -7,6 +7,8 @@ Il software prende in input file di processo standard (`.bpmn` in formato XML) a
 
 1. **Hard Compliance (Analisi Deterministica):** Un parser incrocia la topologia del diagramma (i costrutti BPMN) con i parametri etici della matrice EthicBPMN per rilevare violazioni strutturali delle 11 regole etiche.
 2. **Soft Compliance (Analisi Semantica):** Un'integrazione con LLM (Intelligenza Artificiale) analizza il contesto semantico dei nodi per suggerire ulteriori ottimizzazioni.
+Il progetto utilizza **Llama-3.1-8b-instant** ospitato sull'infrastruttura di [GroqCloud](https://console.groq.com/), un'architettura hardware che garantisce un'inferenza ad alta velocità e che offre l'utilizzo perfetto per un progetto accademico come questo.
+Le API di Groq sono progettate per essere compatibili al 100% con lo standard di mercato.
 
 L'output finale è un **Ethical Audit Report** formattato in Markdown, contenente i log degli errori classificati per priorità (ERROR, WARNING, INFO, SUGGESTION) e il feedback dell'Intelligenza Artificiale.
 
