@@ -1,8 +1,130 @@
 <?xml version="1.0" encoding="UTF-8"?>
-            <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_1">
-              <bpmn:process id="Process_1" isExecutable="true">
-                <bpmn:serviceTask id="Task_1" name="Scarto CV Automatico" />
-                <bpmn:sendTask id="Task_2" name="Invio Email Notifica" />
-                <bpmn:sequenceFlow id="Flow_1" sourceRef="Task_1" targetRef="Task_2" />
-              </bpmn:process>
-            </bpmn:definitions>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:ethic="http://ethicbpmn.org/schema/1.0/ethic"
+                  id="Definitions_Recruitment"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="RecruitmentProcess" isExecutable="true">
+    
+    <bpmn:startEvent id="StartEvent_NeedEmployee" name="Need for a new employee">
+      <bpmn:outgoing>Flow_Start_CreateJob</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_Unsuitable" name="Candidate unsuitable">
+      <bpmn:incoming>Flow_Suitable_No</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Hired" name="New employee hired">
+      <bpmn:incoming>Flow_Onboarding_Hired</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:task id="Task_CreateJobPosting" name="Create job posting">
+      <bpmn:incoming>Flow_Start_CreateJob</bpmn:incoming>
+      <bpmn:outgoing>Flow_CreateJob_PublishJob</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_PublishJobPosting" name="Publish job posting">
+      <bpmn:incoming>Flow_CreateJob_PublishJob</bpmn:incoming>
+      <bpmn:outgoing>Flow_PublishJob_ReviewApp</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:serviceTask id="Task_ReviewApplications" name="Review applications (AI Screening)">
+      <bpmn:extensionElements>
+        <ethic:TaskProfile 
+          type="Evaluation" actor="System" beneficiary="Candidate" 
+          is_automated="true" acc_owner="Null" critical_task="true" 
+          sensitive_data="true" equity_action="Gap_Neutralization" equity_note="Caregiving" criteria_defined="false" 
+          impacts_wellbeing="false" outside_working_hours="false" default_action="false" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_PublishJob_ReviewApp</bpmn:incoming>
+      <bpmn:incoming>Flow_CandidateNotSelected_ReviewApp</bpmn:incoming>
+      <bpmn:incoming>Flow_OfferNotAccepted_ReviewApp</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReviewApp_SuitableGateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:task id="Task_ScheduleInterviews" name="Schedule interviews">
+      <bpmn:incoming>Flow_Suitable_Yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_Schedule_Conduct</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:userTask id="Task_ConductInterviews" name="Conduct interviews">
+      <bpmn:extensionElements>
+        <ethic:TaskProfile 
+          type="Evaluation" actor="HR_Recruiter" beneficiary="Candidate" 
+          is_automated="false" acc_owner="HR_Director" critical_task="true" 
+          sensitive_data="true" equity_action="Time_Extension" equity_note="Disability_Support" criteria_defined="true" 
+          impacts_wellbeing="true" outside_working_hours="false" default_action="false" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Schedule_Conduct</bpmn:incoming>
+      <bpmn:outgoing>Flow_Conduct_SelectedGateway</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:task id="Task_DefineCompensation" name="Define compensation package">
+      <bpmn:incoming>Flow_Selected_Yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_Define_Prepare</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:task id="Task_PrepareJobOffer" name="Prepare job offer">
+      <bpmn:incoming>Flow_Define_Prepare</bpmn:incoming>
+      <bpmn:outgoing>Flow_Prepare_Send</bpmn:outgoing>
+    </bpmn:task>
+    
+    <bpmn:sendTask id="Task_SendOffer" name="Send offer to candidate">
+      <bpmn:extensionElements>
+        <ethic:TaskProfile 
+          type="Communication" actor="System" beneficiary="Candidate" 
+          is_automated="true" acc_owner="HR_Manager" critical_task="false" 
+          sensitive_data="true" equity_action="None" equity_note="Null" criteria_defined="true" 
+          impacts_wellbeing="false" outside_working_hours="true" default_action="false" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Prepare_Send</bpmn:incoming>
+      <bpmn:outgoing>Flow_Send_AcceptedGateway</bpmn:outgoing>
+    </bpmn:sendTask>
+    
+    <bpmn:task id="Task_StartOnboarding" name="Start onboarding process">
+      <bpmn:incoming>Flow_Accepted_Yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_Onboarding_Hired</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="Gateway_SuitableCandidate" name="Suitable candidate?">
+      <bpmn:incoming>Flow_ReviewApp_SuitableGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Suitable_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Suitable_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:exclusiveGateway id="Gateway_CandidateSelected" name="Candidate selected?">
+      <bpmn:incoming>Flow_Conduct_SelectedGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Selected_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_CandidateNotSelected_ReviewApp</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:exclusiveGateway id="Gateway_OfferAccepted" name="Offer accepted?">
+      <bpmn:incoming>Flow_Send_AcceptedGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Accepted_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_OfferNotAccepted_ReviewApp</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:sequenceFlow id="Flow_Start_CreateJob" sourceRef="StartEvent_NeedEmployee" targetRef="Task_CreateJobPosting" />
+    <bpmn:sequenceFlow id="Flow_CreateJob_PublishJob" sourceRef="Task_CreateJobPosting" targetRef="Task_PublishJobPosting" />
+    <bpmn:sequenceFlow id="Flow_PublishJob_ReviewApp" sourceRef="Task_PublishJobPosting" targetRef="Task_ReviewApplications" />
+    
+    <bpmn:sequenceFlow id="Flow_ReviewApp_SuitableGateway" sourceRef="Task_ReviewApplications" targetRef="Gateway_SuitableCandidate" />
+    <bpmn:sequenceFlow id="Flow_Suitable_No" name="No" sourceRef="Gateway_SuitableCandidate" targetRef="EndEvent_Unsuitable" />
+    <bpmn:sequenceFlow id="Flow_Suitable_Yes" name="Yes" sourceRef="Gateway_SuitableCandidate" targetRef="Task_ScheduleInterviews" />
+    
+    <bpmn:sequenceFlow id="Flow_Schedule_Conduct" sourceRef="Task_ScheduleInterviews" targetRef="Task_ConductInterviews" />
+    <bpmn:sequenceFlow id="Flow_Conduct_SelectedGateway" sourceRef="Task_ConductInterviews" targetRef="Gateway_CandidateSelected" />
+    
+    <bpmn:sequenceFlow id="Flow_Selected_Yes" name="Yes" sourceRef="Gateway_CandidateSelected" targetRef="Task_DefineCompensation" />
+    <bpmn:sequenceFlow id="Flow_CandidateNotSelected_ReviewApp" name="No" sourceRef="Gateway_CandidateSelected" targetRef="Task_ReviewApplications" />
+    
+    <bpmn:sequenceFlow id="Flow_Define_Prepare" sourceRef="Task_DefineCompensation" targetRef="Task_PrepareJobOffer" />
+    <bpmn:sequenceFlow id="Flow_Prepare_Send" sourceRef="Task_PrepareJobOffer" targetRef="Task_SendOffer" />
+    <bpmn:sequenceFlow id="Flow_Send_AcceptedGateway" sourceRef="Task_SendOffer" targetRef="Gateway_OfferAccepted" />
+    
+    <bpmn:sequenceFlow id="Flow_Accepted_Yes" name="Yes" sourceRef="Gateway_OfferAccepted" targetRef="Task_StartOnboarding" />
+    <bpmn:sequenceFlow id="Flow_OfferNotAccepted_ReviewApp" name="No" sourceRef="Gateway_OfferAccepted" targetRef="Task_ReviewApplications" />
+    
+    <bpmn:sequenceFlow id="Flow_Onboarding_Hired" sourceRef="Task_StartOnboarding" targetRef="EndEvent_Hired" />
+  </bpmn:process>
+</bpmn:definitions>

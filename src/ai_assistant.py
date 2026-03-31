@@ -20,7 +20,7 @@ class AIAssistant:
 
     def analyze_process_semantics(self, nodes: list[BpmnNode]) -> str:
         if not self.client:
-            return "⚠️ OpenAI API Key non trovata. Analisi semantica saltata."
+            return "OpenAI API Key non trovata. Analisi semantica saltata."
 
         # Prepariamo un riassunto testuale del processo per l'AI
         process_summary = "Analizza questo processo BPMN per potenziali bias etici:\n"

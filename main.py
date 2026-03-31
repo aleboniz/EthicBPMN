@@ -6,7 +6,7 @@ from src.ai_assistant import AIAssistant
 from src.reporter import ReportGenerator
 
 def main():
-    print("🚀 Avvio EthicBPMN Engine...")
+    print("Avvio del motore EthicBPMN...")
     
     # PER TEST: Crea un file XML finto se non esiste, in modo che il codice non vada in crash
     test_file = "data/test_process.bpmn"
@@ -23,24 +23,24 @@ def main():
             </bpmn:definitions>""")
 
     # 1. Parsing
-    print("📥 Parsing del file BPMN...")
+    print("Parsing del file BPMN...")
     parser = BpmnParser(test_file)
     nodes = parser.parse()
     
     # 2. Rule Engine (Analisi Strutturale)
-    print("⚙️ Esecuzione delle regole etiche...")
+    print("Esecuzione delle regole etiche...")
     engine = EthicRuleEngine(nodes)
     violations = engine.run_all_rules()
     
     # 3. AI Assistant (Analisi Semantica)
-    print("🧠 Richiesta feedback ad OpenAI (potrebbe richiedere qualche secondo)...")
+    print("Richiesta feedback a motore LLM GroqCloud (potrebbe richiedere qualche secondo)...")
     ai_assistant = AIAssistant()
     ai_feedback = ai_assistant.analyze_process_semantics(nodes)
     
     # 4. Generazione Output
-    print("📝 Generazione del report...")
+    print("Generazione del report...")
     ReportGenerator.generate_markdown(violations, ai_feedback)
-    print("✅ Analisi completata!")
+    print("Analisi completata")
 
 if __name__ == "__main__":
     main()

@@ -12,10 +12,10 @@ class EquityAction(str, Enum):
     ALTERNATIVE_ROUTING = "Alternative_Routing"
 
 class RuleLevel(str, Enum):
-    ERROR = "🔴 CRITICA (Deploy Bloccato)"
-    WARNING = "🟠 ALTA (Rischio Legale/Operativo)"
-    INFO = "🟡 MEDIA (Best Practice)"
-    SUGGESTION = "🟢 BASSA (Benessere)"
+    ERROR = "CRITICA"
+    WARNING = "ALTA"
+    INFO = "MEDIA"
+    SUGGESTION = "BASSA"
 
 class TaskProfile(BaseModel):
     # Parametri Descrittivi

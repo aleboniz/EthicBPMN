@@ -50,19 +50,38 @@ class BpmnParser:
 
     def _extract_ethic_profile(self, elem: ET.Element) -> TaskProfile | None:
         """
-        Questa funzione cerca il tag <ethic:TaskProfile> dentro il nodo.
-        Per ora, creiamo un Mock se il nodo ha la parola 'AI' o 'Automatico' nel nome
-        per poter testare il motore anche senza un XML pre-compilato.
+        Legge i parametri etici dal tag <ethic:TaskProfile> nascosto dentro <bpmn:extensionElements>.
         """
-        name = elem.get('name', '').lower()
-        if "automatico" in name or "ai" in name or "algoritmo" in name:
-            return TaskProfile(
-                is_automated=True, 
-                critical_task=True, 
-                acc_owner="Null",
-                sensitive_data=True
-            )
-        elif "notifica" in name or "email" in name:
-            return TaskProfile(outside_working_hours=True)
+        # Cerca il blocco delle estensioni
+        ext_elements = elem.find('bpmn:extensionElements', self.namespaces)
+        if ext_elements is None:
+            return None
             
-        return None
+        # Cerca il nostro tag specifico
+        ethic_tag = ext_elements.find('ethic:TaskProfile', self.namespaces)
+        if ethic_tag is None:
+            return None
+
+        # Helper per convertire le stringhe "true"/"false" di XML in booleani Python
+        def str_to_bool(val):
+            return str(val).lower() == 'true'
+
+        try:
+            # Crea e popola l'oggetto TaskProfile con i dati veri dell'XML!
+            return TaskProfile(
+                type=ethic_tag.get('type', 'Execution'),
+                actor=ethic_tag.get('actor', 'System'),
+                is_automated=str_to_bool(ethic_tag.get('is_automated')),
+                acc_owner=ethic_tag.get('acc_owner'),
+                critical_task=str_to_bool(ethic_tag.get('critical_task')),
+                sensitive_data=str_to_bool(ethic_tag.get('sensitive_data')),
+                equity_action=ethic_tag.get('equity_action', 'None'),
+                equity_note=ethic_tag.get('equity_note'),
+                criteria_defined=str_to_bool(ethic_tag.get('criteria_defined')),
+                impacts_wellbeing=str_to_bool(ethic_tag.get('impacts_wellbeing')),
+                outside_working_hours=str_to_bool(ethic_tag.get('outside_working_hours')),
+                default_action=str_to_bool(ethic_tag.get('default_action'))
+            )
+        except Exception as e:
+            print(f"Errore nel parsing del TaskProfile per il nodo {elem.get('name')}: {e}")
+            return None
