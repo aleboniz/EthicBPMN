@@ -4,14 +4,26 @@ from datetime import datetime
 
 class ReportGenerator:
     @staticmethod
-    def generate_markdown(violations: list[Violation], ai_feedback: str, output_path: str = "ethicBPMN_report.md"):
+    def generate_markdown(violations: list[Violation], ai_feedback: str, metrics: dict, output_path: str = "ethicBPMN_report.md"):
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(f"# EthicBPMN Audit Report\n")
             f.write(f"**Data Generazione:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             
+            f.write("## Ethical Process Score \n")
+            f.write(f"- **Maximum Risk (R_max):** `{metrics['r_max']}` (Rischio potenziale totale)\n")
+            f.write(f"- **Observed Risk (R_obs):** `{metrics['r_obs']}` (Rischio delle violazioni trovate)\n")
+            f.write(f"- **Ethical Risk Index (ERI):** `{metrics['eri']}`\n")
+            
+            # Formattazione condizionale del punteggio finale
+            eps_score = metrics['eps']
+                
+            f.write(f"### Punteggio EPS Finale: {eps_score} / 1.00\n\n")
+            f.write("---\n")
+            # ------------------------------------------
+
             f.write("## Analisi Deterministica (Rule Engine)\n")
             if not violations:
-                f.write(" Nessuna violazione etica strutturale rilevata dal parser!\n")
+                f.write("Nessuna violazione etica strutturale rilevata dal parser!\n")
             else:
                 for v in violations:
                     f.write(f"### {v.level.value}\n")

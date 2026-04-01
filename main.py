@@ -31,15 +31,16 @@ def main():
     print("Esecuzione delle regole etiche...")
     engine = EthicRuleEngine(nodes)
     violations = engine.run_all_rules()
+    metrics = engine.calculate_eps_metrics() # <-- NUOVA RIGA: Calcolo dei punteggi!
     
     # 3. AI Assistant (Analisi Semantica)
-    print("Richiesta feedback a motore LLM GroqCloud (potrebbe richiedere qualche secondo)...")
+    print("Richiesta feedback a GroqCloud...")
     ai_assistant = AIAssistant()
     ai_feedback = ai_assistant.analyze_process_semantics(nodes)
     
-    # 4. Generazione Output
+    # 4. Generazione Output (Passiamo anche le metriche!)
     print("Generazione del report...")
-    ReportGenerator.generate_markdown(violations, ai_feedback)
+    ReportGenerator.generate_markdown(violations, ai_feedback, metrics) # <-- MODIFICATA
     print("Analisi completata")
 
 if __name__ == "__main__":
