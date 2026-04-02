@@ -16,8 +16,8 @@ class BpmnParser:
         root = tree.getroot()
         nodes = []
 
-        # Tipi di nodi che vogliamo analizzare
-        target_tags = ['bpmn:task', 'bpmn:serviceTask', 'bpmn:userTask', 'bpmn:sendTask', 'bpmn:exclusiveGateway']
+        # Tipi di nodi che vogliamo analizzare <-- ne ho aggiunti alcuni per coprire più casi reali
+        target_tags = ['bpmn:task', 'bpmn:serviceTask', 'bpmn:userTask', 'bpmn:sendTask', 'bpmn:exclusiveGateway', 'bpmn:businessRuleTask']
 
         for process in root.findall('bpmn:process', self.namespaces):
             # Mappatura delle frecce (Sequence Flows)
