@@ -2,6 +2,8 @@
 from src.models import Violation
 from datetime import datetime
 
+
+
 class ReportGenerator:
     @staticmethod
     def generate_markdown(violations: list[Violation], ai_feedback: str, metrics: dict, nodes: list,output_path: str = "ethicBPMN_report.md"):

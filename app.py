@@ -2,70 +2,79 @@ import streamlit as st
 import io
 from src.parser import BpmnParser
 from src.ai_complete import AICompleter
-from src.rule_engine import EthicRuleEngine  # Usa il nome corretto della classe
+from src.rule_engine import EthicRuleEngine  
 from src.ai_assistant import AIAssistant
-from src.reporter import ReportGenerator
+from src.reporterpdf import PDFReportGenerator
 
-# 1. CONFIGURAZIONE PAGINA (Deve essere la prima istruzione!)
 st.set_page_config(page_title="EthicBPMN Auditor", layout="wide")
 
 st.title("EthicBPMN: Audit Etico Automatizzato")
-st.markdown("Carica il tuo file BPMN per analizzare la conformità all'AI Act e GDPR.")
+st.markdown("Analisi della conformità ai principi etici dell'AI Act e del GDPR per processi BPMN.")
 
-# --- SIDEBAR PER IL CARICAMENTO ---
 with st.sidebar:
     st.header("Configurazione")
     uploaded_file = st.file_uploader("Carica file .bpmn", type="bpmn")
-    process_button = st.button("Avvia Analisi")
+    process_button = st.button("Avvia Analisi", use_container_width=True)
 
-# --- LOGICA DI ELABORAZIONE ---
 if uploaded_file and process_button:
     with st.spinner("Analisi in corso... attendere."):
         try:
-            # 1. Parsing
-            # Passiamo l'oggetto file direttamente al tuo parser
             parser = BpmnParser(uploaded_file)
             nodes = parser.parse()
 
-            # 2. Inizializzazione Assistente e Completer
-            # (Assicurati di avere la chiave API configurata o passata qui)
             ai_assistant = AIAssistant() 
             completer = AICompleter(ai_assistant)
             completer.complete_missing_profiles(nodes)
 
-            # 3. Rule Engine & Metriche
             engine = EthicRuleEngine(nodes)
             violations = engine.run_all_rules()
             metrics = engine.calculate_eps_metrics()
             
-            # 4. Feedback AI
             ai_feedback = ai_assistant.analyze_process_semantics(nodes)
 
-            # 5. Risultati a video
             st.success("Analisi Completata!")
             
             col1, col2, col3 = st.columns(3)
             col1.metric("EPS Score", f"{metrics['eps']:.2f}")
             col2.metric("ERI Index", f"{metrics['eri']:.2f}")
-            col3.metric("Violazioni", len(violations))
+            col3.metric("Violazioni Rilevate", len(violations))
 
-            # 6. Generazione Report (lo salva su disco come sempre)
-            nome_file_report = "report_audit.md"
-            ReportGenerator.generate_markdown(violations, ai_feedback, metrics, nodes, output_path=nome_file_report)
+            st.divider()
 
-            # 7. Bottone di Download
-            with open(nome_file_report, "rb") as file:
-                st.download_button(
-                    label="📥 Scarica Report Audit",
-                    data=file,
-                    file_name=nome_file_report,
-                    mime="text/markdown"
-                )
+            c_left, c_right = st.columns([3, 1])
             
-            # 8. Visualizzazione (Opzionale: vedi il report subito nell'app)
-            with open(nome_file_report, "r", encoding="utf-8") as file:
-                st.markdown("---")
-                st.markdown(file.read())
+            with c_left:
+                st.subheader("Analisi dell'Assistente AI")
+                st.info(ai_feedback)
+
+            with c_right:
+                st.subheader("📥 Esporta Report")
+                nome_file_pdf = "report_audit.pdf"
+                PDFReportGenerator.generate_pdf(violations, ai_feedback, metrics, nodes, output_path=nome_file_pdf)
+                
+                with open(nome_file_pdf, "rb") as f:
+                    st.download_button(
+                        label="Scarica Report PDF",
+                        data=f,
+                        file_name="Analisi_Etica_EthicBPMN.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+
+            st.divider()
+            with st.expander("🔍 Visualizza Dettagli Task (Profilazione Etica)"):
+                for node in nodes:
+                    if node.profile:
+                        st.markdown(f"**Task:** `{node.name}`")
+                        # Mostriamo i dati principali in una riga
+                        d1, d2, d3, d4, d5, d6 = st.columns(6)
+                        d1.write(f"**AI:** {node.profile.is_automated}")
+                        d2.write(f"**Critical:** {node.profile.critical_task}")
+                        d3.write(f"**Sensitive:** {node.profile.sensitive_data}")
+                        d4.write(f"**Wellbeing:** {node.profile.impacts_wellbeing}")
+                        d5.write(f"**Criteria:** {node.profile.criteria_defined}")
+                        d6.write(f"**Off-Hours:** {node.profile.outside_working_hours}")
+                        st.divider()
 
         except Exception as e:
             st.error(f"Si è verificato un errore durante l'analisi: {e}")
