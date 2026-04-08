@@ -12,21 +12,21 @@ class EthicRuleEngine:
             if not node.profile:
                 continue
             
-            # --- LIVELLO 1: REGOLE CRITICHE (Error - Peso 4) ---
+            # --- LIVELLO 1: REGOLE CRITICHE ---
             self._check_rule_1_privacy(node)
             self._check_rule_2_supervisione(node)
             self._check_rule_3_equita(node)
 
-            # --- LIVELLO 2: REGOLE ALTE (Warning - Peso 3) ---
+            # --- LIVELLO 2: REGOLE ALTE ---
             self._check_rule_4_contestualizzazione_anomalia(node)
             self._check_rule_5_neutralita_diritti(node)
             self._check_rule_6_responsabilita(node)
 
-            # --- LIVELLO 3: REGOLE MEDIE (Info - Peso 2) ---
+            # --- LIVELLO 3: REGOLE MEDIE ---
             self._check_rule_7_appello(node)
             self._check_rule_8_trasparenza(node)
 
-            # --- LIVELLO 4: REGOLE BASSE (Suggestion - Peso 1) ---
+            # --- LIVELLO 4: REGOLE BASSE ---
             self._check_rule_9_benessere(node)
             self._check_rule_10_proporzionalita(node)
             self._check_rule_11_disconnessione(node)
@@ -34,19 +34,17 @@ class EthicRuleEngine:
         return self.violations
 
     # ==========================================
-    # 🔴 REGOLE CRITICHE (ERROR)
+    # 🔴 REGOLE CRITICHE (ERROR) - MODIFICATE CON node.id
     # ==========================================
     def _check_rule_1_privacy(self, node: BpmnNode):
-        """Regola 1: Privacy e Minimizzazione dei Dati (Marker: Sensitive_Data)"""
         if node.profile.sensitive_data:
-            # Verifica che vi sia stata l'acquisizione del consenso
             has_consent = any("consenso" in n.name.lower() or "consent" in n.name.lower() for n in self.nodes.values())
             if not has_consent:
-                self._add_violation(1, "Privacy e Minimizzazione", RuleLevel.ERROR, node.name, 
-                                    "Il task tratta dati sensibili ma manca un flusso di 'Acquisizione Consenso Informato' o di anonimizzazione a monte.")
+                # CAMBIATO: node.id invece di node.name
+                self._add_violation(1, "Privacy e Minimizzazione", RuleLevel.ERROR, node.id, 
+                                    "Il task tratta dati sensibili ma manca un flusso di 'Acquisizione Consenso Informato'.")
 
     def _check_rule_2_supervisione(self, node: BpmnNode):
-        """Regola 2: Supervisione Umana (Marker: Is_Automated + Critical_Task)"""
         if node.profile.is_automated and node.profile.critical_task:
             has_human_override = False
             for next_id in node.outgoing_flows:
@@ -55,85 +53,85 @@ class EthicRuleEngine:
                     has_human_override = True
             
             if not has_human_override:
-                self._add_violation(2, "Supervisione Umana", RuleLevel.ERROR, node.name, 
-                                    "L'algoritmo prende una decisione critica senza la validazione obbligatoria di un operatore umano (User Task) a valle.")
+                # CAMBIATO: node.id
+                self._add_violation(2, "Supervisione Umana", RuleLevel.ERROR, node.id, 
+                                    "L'algoritmo prende una decisione critica senza la validazione obbligatoria di un operatore umano.")
 
     def _check_rule_3_equita(self, node: BpmnNode):
-        """Regola 3: Equità e Antidiscriminazione (Marker: Sensitive_Data in automatismi)"""
         if node.profile.sensitive_data and node.profile.is_automated:
             if "blind" not in node.name.lower() and "anonimo" not in node.name.lower():
-                self._add_violation(3, "Equità e Antidiscriminazione", RuleLevel.ERROR, node.name, 
-                                    "Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing' (anonimizzazione funzionale). Rischio di bias.")
+                # CAMBIATO: node.id
+                self._add_violation(3, "Equità e Antidiscriminazione", RuleLevel.ERROR, node.id, 
+                                    "Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing'.")
 
     # ==========================================
-    # 🟠 REGOLE ALTE (WARNING)
+    # 🟠 REGOLE ALTE (WARNING) - MODIFICATE CON node.id
     # ==========================================
     def _check_rule_4_contestualizzazione_anomalia(self, node: BpmnNode):
-        """Regola 4: Contestualizzazione dell'Anomalia (Marker: Trigger su Gateways)"""
-        if node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower() or 'scarto' in node.name.lower()):
+        if node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower()):
             has_investigation = any(n.type_node == 'bpmn:userTask' for n_id in node.outgoing_flows if (n := self.nodes.get(n_id)))
             if not has_investigation:
-                self._add_violation(4, "Contestualizzazione Anomalia", RuleLevel.WARNING, node.name, 
-                                    "L'anomalia di performance sfocia in una decisione automatica senza transitare per un task investigativo.")
+                self._add_violation(4, "Contestualizzazione Anomalia", RuleLevel.WARNING, node.id, 
+                                    "L'anomalia di performance sfocia in una decisione automatica senza controllo investigativo.")
 
     def _check_rule_5_neutralita_diritti(self, node: BpmnNode):
-        """Regola 5: Neutralità dei Diritti (Marker: Equity_Action)"""
         if node.profile.equity_action != EquityAction.NONE:
-            self._add_violation(5, "Neutralità dei Diritti", RuleLevel.WARNING, node.name, 
-                                "Logica di equità applicata. Assicurarsi che i report di KPI (es. tempi, gap) siano normalizzati per non penalizzare il beneficiario visivamente.")
+            self._add_violation(5, "Neutralità dei Diritti", RuleLevel.WARNING, node.id, 
+                                "Logica di equità applicata. Assicurarsi che i report KPI siano normalizzati.")
 
     def _check_rule_6_responsabilita(self, node: BpmnNode):
-        """Regola 6: Responsabilità Chiaramente Identificata (Marker: Critical_Task)"""
         if node.profile.critical_task:
             if not node.profile.acc_owner or node.profile.acc_owner.lower() == "null":
-                self._add_violation(6, "Responsabilità Identificata", RuleLevel.WARNING, node.name, 
-                                    "Azione ad alto rischio senza un titolare umano associato (Acc_Owner assente).")
+                self._add_violation(6, "Responsabilità Identificata", RuleLevel.WARNING, node.id, 
+                                    "Azione ad alto rischio senza un titolare umano associato.")
 
     # ==========================================
-    # 🟡 REGOLE MEDIE (INFO)
+    # 🟡 REGOLE MEDIE (INFO) - MODIFICATE CON node.id
     # ==========================================
     def _check_rule_7_appello(self, node: BpmnNode):
-        """Regola 7: Reversibilità e Diritto di Appello (Marker: Critical_Task + esito)"""
         if node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()):
             has_catch_event = any(n.type_node == 'bpmn:intermediateCatchEvent' for n in self.nodes.values())
             if not has_catch_event:
-                self._add_violation(7, "Reversibilità e Appello", RuleLevel.INFO, node.name, 
-                                    "Decisione sfavorevole priva di una finestra di ricorso (CatchEvent) per l'utente.")
+                self._add_violation(7, "Reversibilità e Appello", RuleLevel.INFO, node.id, 
+                                    "Decisione sfavorevole priva di una finestra di ricorso per l'utente.")
 
     def _check_rule_8_trasparenza(self, node: BpmnNode):
-        """Regola 8: Trasparenza e Spiegabilità (Marker: Critical_Task + Criteria_Defined == False)"""
         if node.profile.critical_task and not node.profile.criteria_defined:
-            self._add_violation(8, "Trasparenza e Spiegabilità", RuleLevel.INFO, node.name, 
-                                "Punto decisionale opaco: i criteri non sono esplicitati (Criteria_Defined = False). Necessario inviare notifica motivazionale.")
+            self._add_violation(8, "Trasparenza e Spiegabilità", RuleLevel.INFO, node.id, 
+                                "Punto decisionale opaco: i criteri non sono esplicitati.")
 
     # ==========================================
-    # 🟢 REGOLE BASSE (SUGGESTION)
+    # 🟢 REGOLE BASSE (SUGGESTION) - MODIFICATE CON node.id
     # ==========================================
     def _check_rule_9_benessere(self, node: BpmnNode):
-        """Regola 9: Beneficenza e Benessere (Marker: Impacts_Wellbeing)"""
         if node.profile.impacts_wellbeing:
             has_rest = any("riposo" in n.name.lower() or "pausa" in n.name.lower() for n in self.nodes.values())
             if not has_rest:
-                self._add_violation(9, "Beneficenza e Benessere", RuleLevel.SUGGESTION, node.name, 
-                                    "Task ad alto impatto cognitivo o gravoso. Si suggerisce di inserire gateway per la ridistribuzione del carico o riposo.")
+                self._add_violation(9, "Beneficenza e Benessere", RuleLevel.SUGGESTION, node.id, 
+                                    "Task ad alto impatto cognitivo. Si suggerisce di inserire pause.")
 
     def _check_rule_10_proporzionalita(self, node: BpmnNode):
-        """Regola 10: Proporzionalità dello Sforzo (Marker: Type)"""
         if node.profile.type == "Monitoring" or "report" in node.name.lower():
-            self._add_violation(10, "Proporzionalità dello Sforzo", RuleLevel.SUGGESTION, node.name, 
-                                "Task di reporting/monitoraggio. Assicurarsi che il controllo non sia più oneroso dell'attività operativa stessa.")
+            self._add_violation(10, "Proporzionalità dello Sforzo", RuleLevel.SUGGESTION, node.id, 
+                                "Task di monitoraggio. Verificare onerosità rispetto all'attività operativa.")
 
     def _check_rule_11_disconnessione(self, node: BpmnNode):
-        """Regola 11: Diritto alla Disconnessione (Marker: Outside_Working_Hours)"""
         if node.profile.outside_working_hours:
-            self._add_violation(11, "Diritto alla Disconnessione", RuleLevel.SUGGESTION, node.name, 
-                                "Task eseguito fuori orario standard. Inserire un TimerEvent per trattenere la notifica/azione fino al turno successivo.")
+            self._add_violation(11, "Diritto alla Disconnessione", RuleLevel.SUGGESTION, node.id, 
+                                "Task eseguito fuori orario. Usare TimerEvent per gestire la notifica nel turno successivo.")
 
     # ==========================================
-    # HELPER E CALCOLO MATEMATICO
+    # HELPER (Assicuriamoci che target sia node.id)
     # ==========================================
-    def _add_violation(self, r_num: int, r_name: str, level: RuleLevel, target: str, msg: str):
-        self.violations.append(Violation(rule_number=r_num, rule_name=r_name, level=level, target_node=target, message=msg))
+    def _add_violation(self, r_num: int, r_name: str, level: RuleLevel, target_id: str, msg: str):
+        # Usiamo target_id che deve essere node.id
+        self.violations.append(Violation(
+            rule_number=r_num, 
+            rule_name=r_name, 
+            level=level, 
+            target_node=target_id, 
+            message=msg
+        ))
 
     def calculate_eps_metrics(self) -> dict:
         """Calcola EPS e ERI basandosi su 4 pesi (CRITICA=4, ALTA=3, MEDIA=2, BASSA=1) per le 11 regole."""

@@ -1,10 +1,11 @@
 import streamlit as st
-import io
 from src.parser import BpmnParser
 from src.ai_complete import AICompleter
 from src.rule_engine import EthicRuleEngine  
 from src.ai_assistant import AIAssistant
 from src.reporterpdf import PDFReportGenerator
+from interface.bpmn_visualizer import visualizza_bpmn_interattivo
+
 
 st.set_page_config(page_title="EthicBPMN Auditor", layout="wide")
 
@@ -39,6 +40,20 @@ if uploaded_file and process_button:
             col2.metric("ERI Index", f"{metrics['eri']:.2f}")
             col3.metric("Violazioni Rilevate", len(violations))
 
+            # --- STEP 1: VISUALIZZAZIONE PROCESSO ---
+            st.divider()
+            st.subheader("Mappa del Processo Analizzato")
+
+            # Leggiamo il contenuto del file per il visualizzatore
+            uploaded_file.seek(0)
+            bpmn_xml_raw = uploaded_file.read().decode("utf-8")
+
+            # Stampa i dati che stai mandando al visualizzatore per vedere cosa c'è dentro
+            #st.write("Debug ID Violazioni:", [v.target_node for v in violations]) 
+
+            # Chiamiamo la funzione che abbiamo creato sopra
+            visualizza_bpmn_interattivo(bpmn_xml_raw, violations)
+           
             st.divider()
 
             c_left, c_right = st.columns([3, 1])
@@ -78,3 +93,4 @@ if uploaded_file and process_button:
 
         except Exception as e:
             st.error(f"Si è verificato un errore durante l'analisi: {e}")
+
