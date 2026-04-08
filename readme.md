@@ -26,7 +26,15 @@ Nella cartella del progetto lanciare il comando (valido su Windows, Mac o Linux)
 - Su Mac/Linux: source venv/bin/activate
 
 ### 3. Installare le dipendenze
+Per far funzionare sia il motore che la nuova interfaccia grafica, è necessario lanciare i seguenti comandi: 
+## 3.1. Installare i requisiti base
 pip install -r requirements.txt
+## 3.2. Installare le librerie per la dashboard e i report
+pip install streamlit fpdf2
 
 ### 4. Eseguire il software nell'ambiente virtuale
+Si può scegliere tra due modalità di esecuzione
+## 4.1. Via terminale (standard)
 python main.py
+## 4.2. Via dashboard (interativa)
+streamlit run app.py
