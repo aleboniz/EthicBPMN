@@ -124,7 +124,6 @@ class EthicRuleEngine:
     # HELPER (Assicuriamoci che target sia node.id)
     # ==========================================
     def _add_violation(self, r_num: int, r_name: str, level: RuleLevel, target_id: str, msg: str):
-        # Usiamo target_id che deve essere node.id
         self.violations.append(Violation(
             rule_number=r_num, 
             rule_name=r_name, 

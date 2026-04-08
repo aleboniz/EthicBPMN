@@ -21,8 +21,6 @@ def visualizza_bpmn_interattivo(xml_content, violations):
     
     audit_json = json.dumps(audit_data)
 
-    # ... (la parte iniziale della funzione rimane uguale) ...
-
     html_code = f"""
     <div id="canvas" style="height: 350px; width: 100%; border: 1px solid #e6e9ef; border-radius: 12px; background-color: #f8f9fa;"></div>
     
