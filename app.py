@@ -105,7 +105,7 @@ if st.session_state.analysis_data is not None:
             )
         
         # --- BPMN FIXATO ---
-        nome_file_bpmn = "Processo_Ethic_Fixed.bpmn"
+        nome_file_bpmn = "Corrected_process.bpmn"
         if hasattr(bpmn_target, 'seek'):
             bpmn_target.seek(0)
         BpmnAutoFixer.generate_fixed_bpmn(bpmn_target, nodes, output_path=nome_file_bpmn)
