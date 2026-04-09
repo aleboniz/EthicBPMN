@@ -80,4 +80,3 @@ class AICompleter:
                 
             except Exception as e:
                 print(f"Errore analisi '{node.name}': {e}")
-

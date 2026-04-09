@@ -22,7 +22,7 @@ def visualizza_bpmn_interattivo(xml_content, violations):
     audit_json = json.dumps(audit_data)
 
     html_code = f"""
-    <div id="canvas" style="height: 350px; width: 100%; border: 1px solid #e6e9ef; border-radius: 12px; background-color: #f8f9fa;"></div>
+    <div id="canvas" style="height: 600px; width: 100%; border: 1px solid #e6e9ef; border-radius: 12px; background-color: #f8f9fa;"></div>
     
     <style>
         /* RESET BASE: Grigio neutro per Task e Gateway (rombi) */
@@ -103,12 +103,26 @@ def visualizza_bpmn_interattivo(xml_content, violations):
           }});
 
           document.addEventListener('mousemove', e => {{
-            tooltip.style.left = (e.clientX + 15) + 'px';
-            tooltip.style.top = (e.clientY + 15) + 'px';
+            let windowHeight = window.innerHeight;
+            let windowWidth = window.innerWidth;
+            let tooltipHeight = tooltip.offsetHeight || 150;
+            let tooltipWidth = tooltip.offsetWidth || 250;
+
+            if (e.clientY + tooltipHeight + 20 > windowHeight) {{
+                tooltip.style.top = (e.clientY - tooltipHeight - 15) + 'px';
+            }} else {{
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            }}
+
+            if (e.clientX + tooltipWidth + 20 > windowWidth) {{
+                tooltip.style.left = (e.clientX - tooltipWidth - 15) + 'px';
+            }} else {{
+                tooltip.style.left = (e.clientX + 15) + 'px';
+            }}
           }});
 
         }} catch (err) {{ console.error(err); }}
       }})();
     </script>
     """
-    components.html(html_code, height=365)
+    components.html(html_code, height=650)
