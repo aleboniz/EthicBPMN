@@ -36,9 +36,5 @@ pip install -r requirements.txt
 #### 3.2. Installare le librerie per la dashboard e i report
 pip install streamlit fpdf2
 
-### 4. Eseguire il software nell'ambiente virtuale
-Si può scegliere tra due modalità di esecuzione
-#### 4.1. Via terminale (standard)
-python main.py
-#### 4.2. Via dashboard (interativa)
+### 4. Eseguire il software
 streamlit run app.py
