@@ -71,6 +71,8 @@ def visualizza_bpmn_interattivo(xml_content, violations):
           
           canvas.zoom('fit-viewport', 'center');
 
+          window.addEventListener('resize', function() {{ canvas.zoom('fit-viewport', 'auto') }});
+
           // Funzione per capire se l'elemento è un Task o un Gateway
           function isAuditable(element) {{
             return element.type.includes('Task') || element.type.includes('Gateway');
@@ -108,17 +110,29 @@ def visualizza_bpmn_interattivo(xml_content, violations):
             let tooltipHeight = tooltip.offsetHeight || 150;
             let tooltipWidth = tooltip.offsetWidth || 250;
 
-            if (e.clientY + tooltipHeight + 20 > windowHeight) {{
-                tooltip.style.top = (e.clientY - tooltipHeight - 15) + 'px';
-            }} else {{
-                tooltip.style.top = (e.clientY + 15) + 'px';
+            // 1. Partiamo dalla posizione standard (in basso a destra del cursore)
+            let newX = e.clientX + 15;
+            let newY = e.clientY + 15;
+
+            // 2. GESTIONE ORIZZONTALE (Destra / Sinistra)
+            if (newX + tooltipWidth > windowWidth) {{
+                newX = e.clientX - tooltipWidth - 15; // Se sfora a destra, ribalta a sinistra
+            }}
+            if (newX < 10) {{
+                newX = 10; // Muro di sicurezza: non andare mai oltre 10px dal bordo sinistro
             }}
 
-            if (e.clientX + tooltipWidth + 20 > windowWidth) {{
-                tooltip.style.left = (e.clientX - tooltipWidth - 15) + 'px';
-            }} else {{
-                tooltip.style.left = (e.clientX + 15) + 'px';
+            // 3. GESTIONE VERTICALE (Basso / Alto)
+            if (newY + tooltipHeight > windowHeight) {{
+                newY = e.clientY - tooltipHeight - 15; // Se sfora in basso, ribalta in alto
             }}
+            if (newY < 10) {{
+                newY = 10; // Muro di sicurezza: non andare mai oltre 10px dal bordo superiore
+            }}
+
+            // Applica le coordinate blindate
+            tooltip.style.left = newX + 'px';
+            tooltip.style.top = newY + 'px';
           }});
 
         }} catch (err) {{ console.error(err); }}
