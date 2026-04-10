@@ -64,9 +64,24 @@ if st.session_state.analysis_data is not None:
     
     # Metriche Superiori
     col1, col2, col3 = st.columns(3)
-    col1.metric("EPS Score", f"{metrics['eps']:.2f}")
-    col2.metric("ERI Index", f"{metrics['eri']:.2f}")
-    col3.metric("Violazioni Rilevate", len(violations))
+            
+    col1.metric(
+        label="EPS Score", 
+        value=f"{metrics['eps']:.2f}",
+        help="**Ethical Process Score (EPS):**\nIndica il livello di conformità globale del processo. Tanto più il valore si avvicina a 1.00, tanto più le regole etiche sono rispettate. Si calcola come complemento all'indice di rischio (1 - ERI)."
+    )
+            
+    col2.metric(
+        label="ERI Index", 
+        value=f"{metrics['eri']:.2f}",
+        help="**Ethical Risk Index (ERI):**\nRappresenta la percentuale di rischio etico del modello. Si calcola come rapporto tra le regole effettivamente violate e il rischio massimo potenziale (R_max)."
+    )
+            
+    col3.metric(
+        label="Violazioni Rilevate", 
+        value=len(violations),
+        help="Il numero totale di difetti strutturali o parametri etici mancanti rilevati matematicamente dal Rule Engine."
+    )
 
     st.divider()
     st.subheader("Mappa del Processo Analizzato")
