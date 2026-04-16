@@ -12,30 +12,28 @@ class EthicRuleEngine:
             if not node.profile:
                 continue
             
-            # --- LIVELLO 1: REGOLE CRITICHE ---
+            # LIVELLO 1: REGOLE CRITICHE
             self._check_rule_1_privacy(node)
             self._check_rule_2_supervisione(node)
             self._check_rule_3_equita(node)
 
-            # --- LIVELLO 2: REGOLE ALTE ---
+            # LIVELLO 2: REGOLE ALTE
             self._check_rule_4_contestualizzazione_anomalia(node)
             self._check_rule_5_neutralita_diritti(node)
             self._check_rule_6_responsabilita(node)
 
-            # --- LIVELLO 3: REGOLE MEDIE ---
+            # LIVELLO 3: REGOLE MEDIE
             self._check_rule_7_appello(node)
             self._check_rule_8_trasparenza(node)
 
-            # --- LIVELLO 4: REGOLE BASSE ---
+            # LIVELLO 4: REGOLE BASSE 
             self._check_rule_9_benessere(node)
             self._check_rule_10_proporzionalita(node)
             self._check_rule_11_disconnessione(node)
 
         return self.violations
 
-    # ==========================================
-    # 🔴 REGOLE CRITICHE (ERROR) - MODIFICATE CON node.id
-    # ==========================================
+    # REGOLE CRITICHE
     def _check_rule_1_privacy(self, node: BpmnNode):
         if node.profile.sensitive_data:
             has_consent = any("consenso" in n.name.lower() or "consent" in n.name.lower() for n in self.nodes.values())
@@ -64,9 +62,7 @@ class EthicRuleEngine:
                 self._add_violation(3, "Equità e Antidiscriminazione", RuleLevel.ERROR, node.id, 
                                     "Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing'.")
 
-    # ==========================================
-    # 🟠 REGOLE ALTE (WARNING) - MODIFICATE CON node.id
-    # ==========================================
+    # REGOLE ALTE
     def _check_rule_4_contestualizzazione_anomalia(self, node: BpmnNode):
         if node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower()):
             has_investigation = any(n.type_node == 'bpmn:userTask' for n_id in node.outgoing_flows if (n := self.nodes.get(n_id)))
@@ -85,9 +81,7 @@ class EthicRuleEngine:
                 self._add_violation(6, "Responsabilità Identificata", RuleLevel.WARNING, node.id, 
                                     "Azione ad alto rischio senza un titolare umano associato.")
 
-    # ==========================================
-    # 🟡 REGOLE MEDIE (INFO) - MODIFICATE CON node.id
-    # ==========================================
+    # REGOLE MEDIE
     def _check_rule_7_appello(self, node: BpmnNode):
         if node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()):
             has_catch_event = any(n.type_node == 'bpmn:intermediateCatchEvent' for n in self.nodes.values())
@@ -100,9 +94,7 @@ class EthicRuleEngine:
             self._add_violation(8, "Trasparenza e Spiegabilità", RuleLevel.INFO, node.id, 
                                 "Punto decisionale opaco: i criteri non sono esplicitati.")
 
-    # ==========================================
-    # 🟢 REGOLE BASSE (SUGGESTION) - MODIFICATE CON node.id
-    # ==========================================
+    # REGOLE BASSE
     def _check_rule_9_benessere(self, node: BpmnNode):
         if node.profile.impacts_wellbeing:
             has_rest = any("riposo" in n.name.lower() or "pausa" in n.name.lower() for n in self.nodes.values())
@@ -120,9 +112,7 @@ class EthicRuleEngine:
             self._add_violation(11, "Diritto alla Disconnessione", RuleLevel.SUGGESTION, node.id, 
                                 "Task eseguito fuori orario. Usare TimerEvent per gestire la notifica nel turno successivo.")
 
-    # ==========================================
-    # HELPER (Assicuriamoci che target sia node.id)
-    # ==========================================
+
     def _add_violation(self, r_num: int, r_name: str, level: RuleLevel, target_id: str, msg: str):
         self.violations.append(Violation(
             rule_number=r_num, 
@@ -137,7 +127,7 @@ class EthicRuleEngine:
         r_max = 0
         r_obs = 0
 
-        # 1. Rischio Massimo (Pesi delle regole applicabili in base ai parametri)
+        # 1. Rischio Massimo
         for node_id, node in self.nodes.items():
             if node.profile:
                 # Regola 1 e 3 (Critiche - Peso 4)

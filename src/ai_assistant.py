@@ -6,14 +6,14 @@ from src.models import BpmnNode
 
 class AIAssistant:
     def __init__(self):
-        load_dotenv(override=True)  # <-- 2. AGGIUNGI QUESTA RIGA (Carica i dati dal file .env)
+        load_dotenv(override=True) 
         
-        # Inizializza il client OpenAI leggendo la variabile d'ambiente
+        # Inizializzazione del client OpenAI leggendo
         self.api_key = os.getenv("OPENAI_API_KEY")
         if self.api_key:
             self.client = OpenAI(
                 api_key=self.api_key,
-                base_url="https://api.groq.com/openai/v1" # Diciamo alla libreria di puntare a Groq!
+                base_url="https://api.groq.com/openai/v1" 
                 )
         else:
             self.client = None
@@ -22,16 +22,17 @@ class AIAssistant:
         if not self.client:
             return "OpenAI API Key non trovata. Analisi semantica saltata."
 
-        # Prepariamo un riassunto testuale del processo per l'AI
+        # Preparazione del riassunto testuale del processo per l'AI
         process_summary = "Analizza questo processo BPMN per potenziali bias etici:\n"
         for node in nodes:
             process_summary += f"- Nodo: {node.name} (Tipo: {node.type_node})\n"
 
         prompt = f"""
-        Sei un Auditor Etico specializzato in processi aziendali (BPMN).
-        Analizza i nomi e i tipi dei seguenti task. Trova potenziali rischi di discriminazione,
-        opacità o impatto sul benessere dei lavoratori non strutturali, ma semantici.
-        Fornisci un suggerimento breve e puntuale (max 150 parole).
+        Sei un Auditor che analizza i principi etici dei processi aziendali (BPMN).
+        Analizza le caratteristiche, i nomi e i tipi dei seguenti task. 
+        Ricerca potenziali rischi etici tra cui privacy, supervisione umana, equità, discriminazione,
+        responsabilità dei task, trasparenza, opacità, impatto sul benessere dei lavoratori, e altri.
+        Fornisci un suggerimento breve e puntuale (max 200 parole).
         
         {process_summary}
         """

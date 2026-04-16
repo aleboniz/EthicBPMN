@@ -23,18 +23,18 @@ class TaskProfile(BaseModel):
     actor: str = "System"
     beneficiary: List[str] = []
     
-    # Governance e Etica
+    # Parametri Etici e di Governance
     is_automated: bool = False
     acc_owner: Optional[str] = None
     critical_task: bool = False
     
-    # Dati ed Equità
+    # Parametri sui Dati ed Equità
     sensitive_data: bool = False
     equity_action: EquityAction = EquityAction.NONE
     equity_note: Optional[str] = None
     criteria_defined: bool = False
     
-    # Benessere ed Ergonomia
+    # Parametrici di Benessere
     impacts_wellbeing: bool = False
     outside_working_hours: bool = False
     default_action: bool = False
@@ -44,7 +44,7 @@ class BpmnNode(BaseModel):
     name: str
     type_node: str # es. 'bpmn:serviceTask', 'bpmn:userTask', 'bpmn:exclusiveGateway'
     profile: Optional[TaskProfile] = None
-    outgoing_flows: List[str] = [] # ID dei nodi successivi
+    outgoing_flows: List[str] = []
 
 class Violation(BaseModel):
     rule_number: int

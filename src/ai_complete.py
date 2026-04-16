@@ -9,12 +9,12 @@ class AICompleter:
     def complete_missing_profiles(self, nodes: list):
         
         for node in nodes:
-            # Se il profilo esiste già (caricato dall'XML), lo saltiamo
+            # Se i dati esistono nel XML, saltiamo l'arricchimento
             if node.profile is not None:
                 print(f"Skipping '{node.name}': Profilo già presente nell'XML (validazione manuale).")
                 continue
 
-            # Identifichiamo i parametri certi basati su metadati e parole chiave
+            # Identifichiamo i parametri basati su metadati e parole chiave
             node_type_lower = node.type_node.lower()
             is_auto_bpmn = any(x in node_type_lower for x in ["servicetask", "businessruletask", "scripttask"])
             
@@ -38,7 +38,7 @@ class AICompleter:
             ]
             is_critical_val = any(w in name_lower for w in critical_keywords)
 
-            # Chiediamo all'AI di completare i parametri sfumati
+            # Chiediamo all'AI di completare i parametri mancanti
             prompt = f"""
             Task: '{node.name}'
             Tipo BPMN: {node.type_node}
@@ -66,7 +66,6 @@ class AICompleter:
                 booleans = re.findall(r'\b(TRUE|FALSE)\b', res_raw, re.IGNORECASE)
                 
                 if len(booleans) >= 6:
-                    # Creazione del profilo: sovrascriviamo l'AI con la logica deterministica del codice dove possibile
                     node.profile = TaskProfile(
                         sensitive_data=is_sensitive_val,
                         is_automated=is_auto_bpmn,

@@ -5,7 +5,7 @@ from src.models import BpmnNode, TaskProfile
 class BpmnParser:
     def __init__(self, file_path: str):
         self.file_path = file_path
-        # I namespace standard dei file BPMN e la nostra estensione
+
         self.namespaces = {
             'bpmn': 'http://www.omg.org/spec/BPMN/20100524/MODEL',
             'ethic': 'http://ethicbpmn.org/schema/1.0/ethic'
@@ -16,11 +16,11 @@ class BpmnParser:
         root = tree.getroot()
         nodes = []
 
-        # Tipi di nodi che vogliamo analizzare <-- ne ho aggiunti alcuni per coprire più casi reali
+        # Tipi di nodi da analizzare
         target_tags = ['bpmn:task', 'bpmn:serviceTask', 'bpmn:userTask', 'bpmn:sendTask', 'bpmn:exclusiveGateway', 'bpmn:businessRuleTask']
 
         for process in root.findall('bpmn:process', self.namespaces):
-            # Mappatura delle frecce (Sequence Flows)
+            # Mappatura delle frecce
             flows = {}
             for flow in process.findall('bpmn:sequenceFlow', self.namespaces):
                 source = flow.get('sourceRef')
@@ -29,14 +29,12 @@ class BpmnParser:
                     flows[source] = []
                 flows[source].append(target)
 
-            # Estrazione dei Nodi
+            # Estrazione dei nodi
             for tag in target_tags:
                 for elem in process.findall(tag, self.namespaces):
                     node_id = elem.get('id')
                     node_name = elem.get('name', 'Unnamed_Node')
                     
-                    # Simuliamo la lettura dell'estensione EthicBPMN (se presente)
-                    # Nella realtà, qui si scansiona <bpmn:extensionElements>
                     profile = self._extract_ethic_profile(elem)
 
                     nodes.append(BpmnNode(
@@ -57,17 +55,17 @@ class BpmnParser:
         if ext_elements is None:
             return None
             
-        # Cerca il nostro tag specifico
+        # Cerca il tag specifico
         ethic_tag = ext_elements.find('ethic:TaskProfile', self.namespaces)
         if ethic_tag is None:
             return None
 
-        # Helper per convertire le stringhe "true"/"false" di XML in booleani Python
+        # conversione stringhe "true"/"false" di XML in boolean
         def str_to_bool(val):
             return str(val).lower() == 'true'
 
         try:
-            # Crea e popola l'oggetto TaskProfile con i dati veri dell'XML!
+            # Creazione oggetto TaskProfile con i dati dell'XML
             return TaskProfile(
                 type=ethic_tag.get('type', 'Execution'),
                 actor=ethic_tag.get('actor', 'System'),

@@ -10,19 +10,19 @@ from src.bpmn_fixer import BpmnAutoFixer
 
 st.set_page_config(page_title="EthicBPMN Auditor", layout="wide")
 
-st.title("EthicBPMN: Audit Etico Automatizzato")
-st.markdown("Analisi della conformità ai principi etici dell'AI Act e del GDPR per processi BPMN.")
+st.title("EthicBPMN: Audit Etico")
+st.markdown("Analisi della conformità ai principi etici per processi BPMN.")
 
 with st.sidebar:
     st.header("Configurazione")
     uploaded_file = st.file_uploader("Carica file .bpmn", type="bpmn")
     process_button = st.button("Avvia Analisi", use_container_width=True)
 
-# --- 1. Inizializzazione della Memoria ---
+# Inizializzazione
 if 'analysis_data' not in st.session_state:
     st.session_state.analysis_data = None
 
-# --- 2. Esecuzione dell'Analisi (Avviene SOLO quando si clicca Avvia) ---
+# Analisi
 if process_button:
     with st.spinner("Analisi in corso..."):
         try:
@@ -39,7 +39,6 @@ if process_button:
             
             ai_feedback = ai_assistant.analyze_process_semantics(nodes)
 
-            # SALVIAMO I RISULTATI NELLA MEMORIA DI STREAMLIT
             st.session_state.analysis_data = {
                 'nodes': nodes,
                 'violations': violations,
@@ -50,9 +49,9 @@ if process_button:
         except Exception as e:
             st.error(f"Si è verificato un errore durante l'analisi: {e}")
 
-# --- 3. Disegno della Dashboard (Legge dalla Memoria) ---
+# Dashboard
 if st.session_state.analysis_data is not None:
-    # Estraiamo i dati dalla memoria
+    # Estrazione dati
     data = st.session_state.analysis_data
     nodes = data['nodes']
     violations = data['violations']
@@ -62,7 +61,7 @@ if st.session_state.analysis_data is not None:
 
     st.success("Analisi Completata!")
     
-    # Metriche Superiori
+    # Metriche
     col1, col2, col3 = st.columns(3)
             
     col1.metric(
@@ -86,7 +85,7 @@ if st.session_state.analysis_data is not None:
     st.divider()
     st.subheader("Mappa del Processo Analizzato")
 
-    # Gestione del file per la mappa
+    # Mappa
     if hasattr(bpmn_target, 'seek'):
         bpmn_target.seek(0)
         bpmn_xml_raw = bpmn_target.read().decode("utf-8")
@@ -107,7 +106,7 @@ if st.session_state.analysis_data is not None:
     with c_right:
         st.subheader("Esporta Dati")
         
-        # --- PDF ---
+        # PDF 
         nome_file_pdf = "report_audit.pdf"
         PDFReportGenerator.generate_pdf(violations, ai_feedback, metrics, nodes, output_path=nome_file_pdf)
         with open(nome_file_pdf, "rb") as f:
@@ -119,7 +118,7 @@ if st.session_state.analysis_data is not None:
                 use_container_width=True
             )
         
-        # --- BPMN FIXATO ---
+        # BPMN FIXER
         nome_file_bpmn = "Corrected_process.bpmn"
         if hasattr(bpmn_target, 'seek'):
             bpmn_target.seek(0)
