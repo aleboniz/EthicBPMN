@@ -43,7 +43,13 @@ with st.sidebar:
         help="Scrivi qui se vuoi che l'Intelligenza Artificiale presti particolare attenzione a un aspetto specifico del processo durante l'analisi semantica."
     )
 
-    process_button = st.button("Avvia Analisi", use_container_width=True)
+    is_btn_disabled = (st.session_state.stage != 'upload') or (uploaded_file is None)
+    
+    process_button = st.button(
+        "Avvia Analisi", 
+        use_container_width=True, 
+        disabled=is_btn_disabled
+    )
     
     if st.session_state.stage != 'upload':
         if st.button("Nuova Analisi", use_container_width=True):
