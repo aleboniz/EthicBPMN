@@ -68,16 +68,22 @@ if st.session_state.stage == 'upload' and process_button:
         st.rerun()
 
 elif st.session_state.stage == 'validation':
-    st.subheader("Revisione Profili Task")
+    st.subheader("Revisione Profili Etici")
+    st.info("Istruisci ogni elemento del processo (Task, Gateway ed Eventi) definendone le caratteristiche etiche.")
+    
     with st.form(key="validation_form"):
+        # Iteriamo su TUTTI i nodi estratti dal parser (inclusi eventi e gateway)
         for node in st.session_state.nodes:
             if hasattr(node, 'profile') and node.profile:
-                st.markdown(f"### Task: `{node.name or node.id}`")
+                st.markdown(f"### Elemento: `{node.name or node.id}`")
+                st.caption(f"Tipo BPMN: {node.type_node}")
+                
                 b1, b2, b3, b4 = st.columns(4)
                 node.profile.is_automated = b1.checkbox("Automatico", value=node.profile.is_automated, key=f"a_{node.id}")
-                node.profile.critical_task = b2.checkbox("Task Critico", value=node.profile.critical_task, key=f"c_{node.id}")
+                node.profile.critical_task = b2.checkbox("Critico", value=node.profile.critical_task, key=f"c_{node.id}")
                 node.profile.sensitive_data = b3.checkbox("Dati Sensibili", value=node.profile.sensitive_data, key=f"s_{node.id}")
                 node.profile.criteria_defined = b4.checkbox("Criteri Definiti", value=node.profile.criteria_defined, key=f"cd_{node.id}")
+                
                 node.profile.impacts_wellbeing = b1.checkbox("Benessere", value=node.profile.impacts_wellbeing, key=f"w_{node.id}")
                 node.profile.outside_working_hours = b2.checkbox("Fuori Orario", value=node.profile.outside_working_hours, key=f"o_{node.id}")
                 node.profile.default_action = b3.checkbox("Azione Default", value=node.profile.default_action, key=f"da_{node.id}")
@@ -91,14 +97,14 @@ elif st.session_state.stage == 'validation':
                 node.profile.equity_action = EquityAction[selected_eq]
 
                 i1, i2 = st.columns(2)
-                node.profile.actor = i1.text_input("Attore (Matricola)", value=node.profile.actor or "", key=f"act_{node.id}")
-                node.profile.beneficiary = i2.text_input("Beneficiari", value=node.profile.beneficiary or "", key=f"ben_{node.id}")
+                node.profile.actor = i1.text_input("Attore / Esecutore", value=node.profile.actor or "", key=f"act_{node.id}")
+                node.profile.beneficiary = i2.text_input("Beneficiari / Interessati", value=node.profile.beneficiary or "", key=f"ben_{node.id}")
 
                 if has_acc:
-                    node.profile.acc_owner = st.text_input("Nome Responsabile", value=node.profile.acc_owner or "", key=f"acc_name_{node.id}")
+                    node.profile.acc_owner = st.text_input("Accountability Owner (Responsabile)", value=node.profile.acc_owner or "", key=f"acc_name_{node.id}")
                 else:
                     node.profile.acc_owner = None
-                node.profile.equity_note = st.text_area("Note Equità", value=node.profile.equity_note or "", height=80, key=f"eqn_{node.id}")
+                node.profile.equity_note = st.text_area("Note Etiche/Equità", value=node.profile.equity_note or "", height=80, key=f"eqn_{node.id}")
                 st.markdown("---")
         
         submitted = st.form_submit_button("Conferma Parametri e Genera Audit", use_container_width=True)
@@ -118,7 +124,6 @@ elif st.session_state.stage == 'validation':
             'nodes': st.session_state.nodes,
             'violations': violations,
             'metrics': engine.calculate_eps_metrics(),
-            # Passiamo il custom_focus all'analisi semantica
             'ai_feedback': ai_assistant.analyze_process_semantics(
                 st.session_state.nodes, 
                 custom_focus=custom_focus
@@ -139,9 +144,9 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
 
     st.success("Analisi Completata!")
     col1, col2, col3 = st.columns(3)
-    col1.metric("EPS Score", f"{data['metrics']['eps']:.2f}", help="Ethical Process Score...")
-    col2.metric("ERI Index", f"{data['metrics']['eri']:.2f}", help="Ethical Risk Index...")
-    col3.metric("Violazioni Rilevate", len(data['violations']), help="Numero totale di difetti...")
+    col1.metric("EPS Score", f"{data['metrics']['eps']:.2f}", help="Ethical Process Score (EPS): Livello di conformità globale.")
+    col2.metric("ERI Index", f"{data['metrics']['eri']:.2f}", help="Ethical Risk Index (ERI): Percentuale di rischio etico rilevata.")
+    col3.metric("Violazioni Rilevate", len(data['violations']), help="Numero totale di criticità etiche riscontrate.")
 
     st.divider()
     visualizza_bpmn_interattivo(st.session_state.bpmn_xml_raw, data['violations'])
@@ -154,11 +159,12 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
         v_map.setdefault(v.target_node, []).append(v)
 
     if not v_map:
-        st.success("Nessuna violazione rilevata.")
+        st.success("Nessuna violazione rilevata. Il processo rispetta i criteri definiti.")
     else:
         for t_id, v_list in v_map.items():
-            t_name = next((n.name for n in data['nodes'] if n.id == t_id), t_id)
-            with st.expander(f"Task: {t_name}"):
+            node = next((n for n in data['nodes'] if n.id == t_id), None)
+            t_name = node.name if node and node.name else t_id
+            with st.expander(f"Elemento: {t_name}"):
                 for v in v_list:
                     lvl = v.level.name.upper()
                     style_class = "violation-error" if lvl == "ERROR" else "violation-warning" if lvl == "WARNING" else "violation-suggestion" if lvl == "SUGGESTION" else "violation-info"
@@ -168,7 +174,7 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
     cl, cr = st.columns([3, 1])
     with cl:
         st.subheader("Analisi dell'Assistente AI")
-        if 'custom_focus' in globals() and custom_focus.strip():
+        if custom_focus and custom_focus.strip():
             st.caption(f"**Focus richiesto:** *{custom_focus}*")
         st.info(data['ai_feedback'])
 
@@ -177,20 +183,23 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
 
     with cr:
         st.subheader("Esporta Dati")
-        PDFReportGenerator.generate_pdf(data['violations'], data['ai_feedback'], data['metrics'], data['nodes'], "report_audit.pdf")
+        reeng_text = data.get('reengineering', "Nessuna proposta disponibile.")
+        PDFReportGenerator.generate_pdf(data['violations'], data['ai_feedback'], data['metrics'], data['nodes'], reeng_text, "report_audit.pdf")
         with open("report_audit.pdf", "rb") as f:
-            st.download_button("Scarica Report PDF", f, "Analisi_Etica.pdf", use_container_width=True)
+            st.download_button("Scarica Report PDF", f, "Analisi_Etica_EthicBPMN.pdf", use_container_width=True)
         
         BpmnAutoFixer.generate_fixed_bpmn("temp_process.bpmn", data['nodes'], "Corrected_process.bpmn")
         with open("Corrected_process.bpmn", "rb") as f:
             st.download_button("Scarica BPMN Corretto", f, "Corrected_process.bpmn", use_container_width=True)
 
     st.divider()
-    with st.expander("Verifica Input e Dettagli Task", expanded=True):
+    with st.expander("Verifica Parametri Inseriti", expanded=False):
         for node in data['nodes']:
             if node.profile:
-                st.markdown(f"#### Task: `{node.name or node.id}`")
+                st.markdown(f"#### Elemento: `{node.name or node.id}`")
                 v1, v2 = st.columns(2)
                 v1.write(f"**Attore:** {node.profile.actor or 'N/A'} | **Beneficiari:** {node.profile.beneficiary or 'N/A'}")
                 v2.write(f"**Tipo:** {node.profile.type} | **Equity:** {node.profile.equity_action.name}")
                 st.divider()
+
+                

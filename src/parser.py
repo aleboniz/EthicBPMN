@@ -17,7 +17,20 @@ class BpmnParser:
         nodes = []
 
         # Tipi di nodi da analizzare
-        target_tags = ['bpmn:task', 'bpmn:serviceTask', 'bpmn:userTask', 'bpmn:sendTask', 'bpmn:exclusiveGateway', 'bpmn:businessRuleTask']
+        target_tags = [
+            # Task (Configurabili dall'utente)
+            'bpmn:task', 'bpmn:serviceTask', 'bpmn:userTask', 
+            'bpmn:sendTask', 'bpmn:businessRuleTask', 'bpmn:receiveTask',
+            
+            # Gateway (Logici - Strutturali)
+            'bpmn:exclusiveGateway', 'bpmn:parallelGateway', 'bpmn:inclusiveGateway',
+            
+            # Eventi (Etici - Strutturali)
+            'bpmn:intermediateCatchEvent',  # Timer/Messaggi in attesa
+            'bpmn:intermediateThrowEvent',  # Notifiche in uscita
+            'bpmn:boundaryEvent',           # Appelli, Timeout, Errori sul bordo
+            'bpmn:callActivity'             # Richiamo a sotto-processi esterni (Accountability)
+        ]
 
         for process in root.findall('bpmn:process', self.namespaces):
             # Mappatura delle frecce
@@ -33,8 +46,21 @@ class BpmnParser:
             for tag in target_tags:
                 for elem in process.findall(tag, self.namespaces):
                     node_id = elem.get('id')
-                    node_name = elem.get('name', 'Unnamed_Node')
+                    node_name = elem.get('name')
                     
+                    # Gestione nomi di default per eventi e gateway se non specificati
+                    if not node_name or node_name == 'Unnamed_Node':
+                        if tag == 'bpmn:intermediateCatchEvent':
+                            node_name = "Evento di Attesa (Timer/Messaggio)"
+                        elif tag == 'bpmn:boundaryEvent':
+                            node_name = "Evento di Eccezione (Appello/Timeout)"
+                        elif 'Gateway' in tag:
+                            node_name = "Bivio Decisionale (Gateway)"
+                        elif tag == 'bpmn:intermediateThrowEvent':
+                            node_name = "Evento di Invio Notifica"
+                        else:
+                            node_name = node_id
+
                     profile = self._extract_ethic_profile(elem)
 
                     nodes.append(BpmnNode(

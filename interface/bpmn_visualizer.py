@@ -25,21 +25,22 @@ def visualizza_bpmn_interattivo(xml_content, violations):
     <div id="canvas" style="height: 600px; width: 100%; border: 1px solid #e6e9ef; border-radius: 12px; background-color: #f8f9fa;"></div>
     
     <style>
-        /* RESET BASE: Grigio neutro per Task e Gateway (rombi) */
+        /* RESET BASE: Grigio neutro per Task (rect), Gateway (polygon) ed Eventi (circle) */
         .djs-container .djs-visual rect, 
-        .djs-container .djs-visual polygon {{
+        .djs-container .djs-visual polygon,
+        .djs-container .djs-visual circle {{
             fill: #fdfdfd !important;
             stroke: #999999 !important;
             stroke-width: 1px !important;
             transition: fill 0.2s, stroke 0.2s !important;
         }}
 
-        /* HOVER: Colori per rettangoli (Task) e poligoni (Gateway) */
-        .hover-error.djs-shape .djs-visual rect, .hover-error.djs-shape .djs-visual polygon {{ fill: #ffdbdb !important; stroke: #ff0000 !important; stroke-width: 3px !important; }}
-        .hover-warning.djs-shape .djs-visual rect, .hover-warning.djs-shape .djs-visual polygon {{ fill: #ffeacc !important; stroke: #ff8000 !important; stroke-width: 3px !important; }}
-        .hover-info.djs-shape .djs-visual rect, .hover-info.djs-shape .djs-visual polygon {{ fill: #fff9db !important; stroke: #fab005 !important; stroke-width: 2px !important; }}
-        .hover-suggestion.djs-shape .djs-visual rect, .hover-suggestion.djs-shape .djs-visual polygon {{ fill: #fdffdb !important; stroke: #d4d400 !important; stroke-width: 2px !important; }}
-        .hover-none.djs-shape .djs-visual rect, .hover-none.djs-shape .djs-visual polygon {{ fill: #e6ffed !important; stroke: #28a745 !important; stroke-width: 2px !important; }}
+        /* HOVER: Applichiamo i colori a tutti i tipi di forme (rect, polygon, circle) */
+        .hover-error.djs-shape .djs-visual rect, .hover-error.djs-shape .djs-visual polygon, .hover-error.djs-shape .djs-visual circle {{ fill: #ffdbdb !important; stroke: #ff0000 !important; stroke-width: 3px !important; }}
+        .hover-warning.djs-shape .djs-visual rect, .hover-warning.djs-shape .djs-visual polygon, .hover-warning.djs-shape .djs-visual circle {{ fill: #ffeacc !important; stroke: #ff8000 !important; stroke-width: 3px !important; }}
+        .hover-info.djs-shape .djs-visual rect, .hover-info.djs-shape .djs-visual polygon, .hover-info.djs-shape .djs-visual circle {{ fill: #fff9db !important; stroke: #fab005 !important; stroke-width: 2px !important; }}
+        .hover-suggestion.djs-shape .djs-visual rect, .hover-suggestion.djs-shape .djs-visual polygon, .hover-suggestion.djs-shape .djs-visual circle {{ fill: #fdffdb !important; stroke: #d4d400 !important; stroke-width: 2px !important; }}
+        .hover-none.djs-shape .djs-visual rect, .hover-none.djs-shape .djs-visual polygon, .hover-none.djs-shape .djs-visual circle {{ fill: #e6ffed !important; stroke: #28a745 !important; stroke-width: 2px !important; }}
 
         .bpmn-tooltip {{
             position: fixed; background: white; border-radius: 8px; padding: 12px;
@@ -73,9 +74,11 @@ def visualizza_bpmn_interattivo(xml_content, violations):
 
           window.addEventListener('resize', function() {{ canvas.zoom('fit-viewport', 'auto') }});
 
-          // Funzione per capire se l'elemento è un Task o un Gateway
+          // MODIFICATA: Ora include anche gli Eventi
           function isAuditable(element) {{
-            return element.type.includes('Task') || element.type.includes('Gateway');
+            return element.type.includes('Task') || 
+                   element.type.includes('Gateway') || 
+                   element.type.includes('Event');
           }}
 
           eventBus.on('element.hover', function(e) {{
@@ -89,7 +92,12 @@ def visualizza_bpmn_interattivo(xml_content, violations):
                 tooltip.className = 'bpmn-tooltip level-' + level;
                 tooltip.style.display = 'block';
                 
-                let header = element.type.includes('Gateway') ? 'Audit Gateway: ' : 'Audit Task: ';
+                // Intestazione dinamica in base al tipo
+                let header = 'Audit Element: ';
+                if (element.type.includes('Gateway')) header = 'Audit Gateway: ';
+                else if (element.type.includes('Event')) header = 'Audit Event: ';
+                else if (element.type.includes('Task')) header = 'Audit Task: ';
+
                 tooltip.innerHTML = '<b>' + header + level + '</b><br>' + 
                                    (data ? data.messages : ['Nessuna criticità rilevata.']).map(m => '• ' + m).join('<br>');
             }}
@@ -110,27 +118,19 @@ def visualizza_bpmn_interattivo(xml_content, violations):
             let tooltipHeight = tooltip.offsetHeight || 150;
             let tooltipWidth = tooltip.offsetWidth || 250;
 
-            // 1. Partiamo dalla posizione standard (in basso a destra del cursore)
             let newX = e.clientX + 15;
             let newY = e.clientY + 15;
 
-            // 2. GESTIONE ORIZZONTALE (Destra / Sinistra)
             if (newX + tooltipWidth > windowWidth) {{
-                newX = e.clientX - tooltipWidth - 15; // Se sfora a destra, ribalta a sinistra
+                newX = e.clientX - tooltipWidth - 15;
             }}
-            if (newX < 10) {{
-                newX = 10; // Muro di sicurezza: non andare mai oltre 10px dal bordo sinistro
-            }}
+            if (newX < 10) newX = 10;
 
-            // 3. GESTIONE VERTICALE (Basso / Alto)
             if (newY + tooltipHeight > windowHeight) {{
-                newY = e.clientY - tooltipHeight - 15; // Se sfora in basso, ribalta in alto
+                newY = e.clientY - tooltipHeight - 15;
             }}
-            if (newY < 10) {{
-                newY = 10; // Muro di sicurezza: non andare mai oltre 10px dal bordo superiore
-            }}
+            if (newY < 10) newY = 10;
 
-            // Applica le coordinate blindate
             tooltip.style.left = newX + 'px';
             tooltip.style.top = newY + 'px';
           }});

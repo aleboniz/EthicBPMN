@@ -15,7 +15,9 @@ class PDFReportGenerator:
 
         def clean(text):
             if text is None: return "N/A"
-            return str(text).encode('latin-1', 'replace').decode('latin-1')
+            # Pulizia Markdown: rimuove grassetti, titoli e simboli di elenco puntato AI
+            text = str(text).replace("**", "").replace("###", "").replace("#", "").replace("+ ", "- ")
+            return text.encode('latin-1', 'replace').decode('latin-1')
 
         pdf.set_fill_color(*PRIMARY_BLUE)
         pdf.rect(0, 0, 210, 40, 'F')
@@ -103,8 +105,15 @@ class PDFReportGenerator:
             pdf.cell(0, 10, "Nessuna violazione rilevata.", ln=True)
         else:
             for v in violations:
+                nome_leggibile = v.target_node
+                if nodes:
+                    for nodo in nodes:
+                        if nodo.id == v.target_node:
+                            if nodo.name and nodo.name.strip():
+                                nome_leggibile = nodo.name
+                            break 
+
                 lvl = v.level.name.upper() if hasattr(v.level, 'name') else str(v.level).upper()
-                
                 if "ERROR" in lvl:
                     pdf.set_text_color(220, 53, 41)    
                 elif "WARNING" in lvl:
@@ -114,30 +123,31 @@ class PDFReportGenerator:
                 elif "SUGGESTION" in lvl:
                     pdf.set_text_color(218, 165, 32)  
                 else:
-                    pdf.set_text_color(*TEXT_DARK)   
+                    pdf.set_text_color(0, 0, 0)   
 
                 pdf.set_font("Arial", "B", 10)
                 pdf.cell(0, 7, clean(f" {lvl}: {v.rule_name}"), ln=True)
-                
                 pdf.set_font("Arial", "", 9)
-                pdf.set_text_color(*TEXT_DARK)
-                pdf.multi_cell(0, 5, clean(f" Elemento: {v.target_node}\n Messaggio: {v.message}"), border="L")
+                pdf.set_text_color(50, 50, 50)
+                
+                testo_dettaglio = f" Elemento: {nome_leggibile}\n Messaggio: {v.message}"
+                pdf.multi_cell(0, 5, clean(testo_dettaglio), border="L")
                 pdf.ln(3)
 
         pdf.ln(5)
         pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", "B", 14)
+        pdf.set_text_color(*TEXT_DARK)
         pdf.cell(0, 10, "4. Parere dell'Assistente AI", ln=True, fill=True)
         pdf.set_font("Arial", "", 10) 
         pdf.multi_cell(0, 6, clean(ai_feedback))
 
         pdf.ln(8)
-        pdf.set_fill_color(230, 245, 230) # Sfondo verde
+        pdf.set_fill_color(230, 245, 230)
         pdf.set_font("Arial", "B", 14)
         pdf.cell(0, 10, clean("5. Proposte di Reingegnerizzazione (Modello TO-BE)"), ln=True, fill=True)
         pdf.set_font("Arial", "", 10)
         pdf.ln(2)
-        clean_proposal = str(reengineering_proposals).replace("**", "").replace("#", "")
-        pdf.multi_cell(0, 6, clean(clean_proposal))
+        pdf.multi_cell(0, 6, clean(reengineering_proposals))
 
         pdf.output(output_path)

@@ -1,248 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                  xmlns:ethic="http://ethicbpmn.org/schema/1.0/ethic"
-                  id="Definitions_Recruitment"
-                  targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="RecruitmentProcess" isExecutable="true">
-    
-    <bpmn:startEvent id="StartEvent_NeedEmployee" name="Need for a new employee">
-      <bpmn:outgoing>Flow_Start_CreateJob</bpmn:outgoing>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_110ad70" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.28.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:process id="Process_06xuw5s" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0i9gztl</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:endEvent id="EndEvent_Unsuitable" name="Candidate unsuitable">
-      <bpmn:incoming>Flow_Suitable_No</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:endEvent id="EndEvent_Hired" name="New employee hired">
-      <bpmn:incoming>Flow_Onboarding_Hired</bpmn:incoming>
-    </bpmn:endEvent>
-
-    <bpmn:task id="Task_CreateJobPosting" name="Create job posting">
-      <bpmn:incoming>Flow_Start_CreateJob</bpmn:incoming>
-      <bpmn:outgoing>Flow_CreateJob_PublishJob</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:task id="Task_PublishJobPosting" name="Publish job posting">
-      <bpmn:incoming>Flow_CreateJob_PublishJob</bpmn:incoming>
-      <bpmn:outgoing>Flow_PublishJob_ReviewApp</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:serviceTask id="Task_ReviewApplications" name="Review applications (AI Screening)">
-      <bpmn:extensionElements>
-        <ethic:TaskProfile 
-          type="Evaluation" actor="System" beneficiary="Candidate" 
-          is_automated="true" acc_owner="Null" critical_task="true" 
-          sensitive_data="true" equity_action="Gap_Neutralization" equity_note="Caregiving" criteria_defined="false" 
-          impacts_wellbeing="false" outside_working_hours="false" default_action="false" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_PublishJob_ReviewApp</bpmn:incoming>
-      <bpmn:incoming>Flow_CandidateNotSelected_ReviewApp</bpmn:incoming>
-      <bpmn:incoming>Flow_OfferNotAccepted_ReviewApp</bpmn:incoming>
-      <bpmn:outgoing>Flow_ReviewApp_SuitableGateway</bpmn:outgoing>
+    <bpmn:serviceTask id="Activity_0gzbse9" name="Biometric analysis and constant surveillance">
+      <bpmn:incoming>Flow_0i9gztl</bpmn:incoming>
+      <bpmn:outgoing>Flow_19rz74l</bpmn:outgoing>
     </bpmn:serviceTask>
-    
-    <bpmn:task id="Task_ScheduleInterviews" name="Schedule interviews">
-      <bpmn:incoming>Flow_Suitable_Yes</bpmn:incoming>
-      <bpmn:outgoing>Flow_Schedule_Conduct</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:userTask id="Task_ConductInterviews" name="Conduct interviews">
-      <bpmn:extensionElements>
-        <ethic:TaskProfile 
-          type="Evaluation" actor="HR_Recruiter" beneficiary="Candidate" 
-          is_automated="false" acc_owner="HR_Director" critical_task="true" 
-          sensitive_data="true" equity_action="Time_Extension" equity_note="Disability_Support" criteria_defined="true" 
-          impacts_wellbeing="true" outside_working_hours="false" default_action="false" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Schedule_Conduct</bpmn:incoming>
-      <bpmn:outgoing>Flow_Conduct_SelectedGateway</bpmn:outgoing>
+    <bpmn:userTask id="Activity_1xwcs03" name="coffee break">
+      <bpmn:incoming>Flow_19rz74l</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ovgwl7</bpmn:outgoing>
     </bpmn:userTask>
-    
-    <bpmn:task id="Task_DefineCompensation" name="Define compensation package">
-      <bpmn:incoming>Flow_Selected_Yes</bpmn:incoming>
-      <bpmn:outgoing>Flow_Define_Prepare</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:task id="Task_PrepareJobOffer" name="Prepare job offer">
-      <bpmn:incoming>Flow_Define_Prepare</bpmn:incoming>
-      <bpmn:outgoing>Flow_Prepare_Send</bpmn:outgoing>
-    </bpmn:task>
-    
-    <bpmn:sendTask id="Task_SendOffer" name="Send offer to candidate">
-      <bpmn:extensionElements>
-        <ethic:TaskProfile 
-          type="Communication" actor="System" beneficiary="Candidate" 
-          is_automated="true" acc_owner="HR_Manager" critical_task="false" 
-          sensitive_data="true" equity_action="None" equity_note="Null" criteria_defined="true" 
-          impacts_wellbeing="false" outside_working_hours="true" default_action="false" />
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Prepare_Send</bpmn:incoming>
-      <bpmn:outgoing>Flow_Send_AcceptedGateway</bpmn:outgoing>
-    </bpmn:sendTask>
-    
-    <bpmn:task id="Task_StartOnboarding" name="Start onboarding process">
-      <bpmn:incoming>Flow_Accepted_Yes</bpmn:incoming>
-      <bpmn:outgoing>Flow_Onboarding_Hired</bpmn:outgoing>
-    </bpmn:task>
-
-    <bpmn:exclusiveGateway id="Gateway_SuitableCandidate" name="Suitable candidate?">
-      <bpmn:incoming>Flow_ReviewApp_SuitableGateway</bpmn:incoming>
-      <bpmn:outgoing>Flow_Suitable_Yes</bpmn:outgoing>
-      <bpmn:outgoing>Flow_Suitable_No</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    
-    <bpmn:exclusiveGateway id="Gateway_CandidateSelected" name="Candidate selected?">
-      <bpmn:incoming>Flow_Conduct_SelectedGateway</bpmn:incoming>
-      <bpmn:outgoing>Flow_Selected_Yes</bpmn:outgoing>
-      <bpmn:outgoing>Flow_CandidateNotSelected_ReviewApp</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    
-    <bpmn:exclusiveGateway id="Gateway_OfferAccepted" name="Offer accepted?">
-      <bpmn:incoming>Flow_Send_AcceptedGateway</bpmn:incoming>
-      <bpmn:outgoing>Flow_Accepted_Yes</bpmn:outgoing>
-      <bpmn:outgoing>Flow_OfferNotAccepted_ReviewApp</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-
-    <bpmn:sequenceFlow id="Flow_Start_CreateJob" sourceRef="StartEvent_NeedEmployee" targetRef="Task_CreateJobPosting" />
-    <bpmn:sequenceFlow id="Flow_CreateJob_PublishJob" sourceRef="Task_CreateJobPosting" targetRef="Task_PublishJobPosting" />
-    <bpmn:sequenceFlow id="Flow_PublishJob_ReviewApp" sourceRef="Task_PublishJobPosting" targetRef="Task_ReviewApplications" />
-    
-    <bpmn:sequenceFlow id="Flow_ReviewApp_SuitableGateway" sourceRef="Task_ReviewApplications" targetRef="Gateway_SuitableCandidate" />
-    <bpmn:sequenceFlow id="Flow_Suitable_No" name="No" sourceRef="Gateway_SuitableCandidate" targetRef="EndEvent_Unsuitable" />
-    <bpmn:sequenceFlow id="Flow_Suitable_Yes" name="Yes" sourceRef="Gateway_SuitableCandidate" targetRef="Task_ScheduleInterviews" />
-    
-    <bpmn:sequenceFlow id="Flow_Schedule_Conduct" sourceRef="Task_ScheduleInterviews" targetRef="Task_ConductInterviews" />
-    <bpmn:sequenceFlow id="Flow_Conduct_SelectedGateway" sourceRef="Task_ConductInterviews" targetRef="Gateway_CandidateSelected" />
-    
-    <bpmn:sequenceFlow id="Flow_Selected_Yes" name="Yes" sourceRef="Gateway_CandidateSelected" targetRef="Task_DefineCompensation" />
-    <bpmn:sequenceFlow id="Flow_CandidateNotSelected_ReviewApp" name="No" sourceRef="Gateway_CandidateSelected" targetRef="Task_ReviewApplications" />
-    
-    <bpmn:sequenceFlow id="Flow_Define_Prepare" sourceRef="Task_DefineCompensation" targetRef="Task_PrepareJobOffer" />
-    <bpmn:sequenceFlow id="Flow_Prepare_Send" sourceRef="Task_PrepareJobOffer" targetRef="Task_SendOffer" />
-    <bpmn:sequenceFlow id="Flow_Send_AcceptedGateway" sourceRef="Task_SendOffer" targetRef="Gateway_OfferAccepted" />
-    
-    <bpmn:sequenceFlow id="Flow_Accepted_Yes" name="Yes" sourceRef="Gateway_OfferAccepted" targetRef="Task_StartOnboarding" />
-    <bpmn:sequenceFlow id="Flow_OfferNotAccepted_ReviewApp" name="No" sourceRef="Gateway_OfferAccepted" targetRef="Task_ReviewApplications" />
-    
-    <bpmn:sequenceFlow id="Flow_Onboarding_Hired" sourceRef="Task_StartOnboarding" targetRef="EndEvent_Hired" />
+    <bpmn:serviceTask id="Activity_160t5mc" name="Automatic archiving of health data">
+      <bpmn:incoming>Flow_0ovgwl7</bpmn:incoming>
+      <bpmn:outgoing>Flow_0udsige</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_1x4ji69">
+      <bpmn:incoming>Flow_0udsige</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0i9gztl" sourceRef="StartEvent_1" targetRef="Activity_0gzbse9" />
+    <bpmn:sequenceFlow id="Flow_19rz74l" sourceRef="Activity_0gzbse9" targetRef="Activity_1xwcs03" />
+    <bpmn:sequenceFlow id="Flow_0ovgwl7" sourceRef="Activity_1xwcs03" targetRef="Activity_160t5mc" />
+    <bpmn:sequenceFlow id="Flow_0udsige" sourceRef="Activity_160t5mc" targetRef="Event_1x4ji69" />
   </bpmn:process>
-
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="RecruitmentProcess">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_NeedEmployee">
-        <dc:Bounds x="150" y="100" width="36" height="36" />
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_06xuw5s">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_CreateJobPosting_di" bpmnElement="Task_CreateJobPosting">
-        <dc:Bounds x="240" y="78" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_0gzbse9_di" bpmnElement="Activity_0gzbse9">
+        <dc:Bounds x="240" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_PublishJobPosting_di" bpmnElement="Task_PublishJobPosting">
-        <dc:Bounds x="390" y="78" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_1xwcs03_di" bpmnElement="Activity_1xwcs03">
+        <dc:Bounds x="360" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ReviewApplications_di" bpmnElement="Task_ReviewApplications">
-        <dc:Bounds x="540" y="78" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_160t5mc_di" bpmnElement="Activity_160t5mc">
+        <dc:Bounds x="480" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_SuitableCandidate_di" bpmnElement="Gateway_SuitableCandidate" isMarkerVisible="true">
-        <dc:Bounds x="695" y="93" width="50" height="50" />
+      <bpmndi:BPMNShape id="Event_1x4ji69_di" bpmnElement="Event_1x4ji69">
+        <dc:Bounds x="612" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_Unsuitable_di" bpmnElement="EndEvent_Unsuitable">
-        <dc:Bounds x="822" y="100" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ScheduleInterviews_di" bpmnElement="Task_ScheduleInterviews">
-        <dc:Bounds x="670" y="210" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_ConductInterviews_di" bpmnElement="Task_ConductInterviews">
-        <dc:Bounds x="540" y="210" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_CandidateSelected_di" bpmnElement="Gateway_CandidateSelected" isMarkerVisible="true">
-        <dc:Bounds x="415" y="225" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_DefineCompensation_di" bpmnElement="Task_DefineCompensation">
-        <dc:Bounds x="390" y="340" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_PrepareJobOffer_di" bpmnElement="Task_PrepareJobOffer">
-        <dc:Bounds x="540" y="340" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_SendOffer_di" bpmnElement="Task_SendOffer">
-        <dc:Bounds x="690" y="340" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_OfferAccepted_di" bpmnElement="Gateway_OfferAccepted" isMarkerVisible="true">
-        <dc:Bounds x="845" y="355" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_StartOnboarding_di" bpmnElement="Task_StartOnboarding">
-        <dc:Bounds x="820" y="470" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_Hired_di" bpmnElement="EndEvent_Hired">
-        <dc:Bounds x="972" y="492" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_Start_CreateJob_di" bpmnElement="Flow_Start_CreateJob">
-        <di:waypoint x="186" y="118" />
-        <di:waypoint x="240" y="118" />
+      <bpmndi:BPMNEdge id="Flow_0i9gztl_di" bpmnElement="Flow_0i9gztl">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="240" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_CreateJob_PublishJob_di" bpmnElement="Flow_CreateJob_PublishJob">
-        <di:waypoint x="340" y="118" />
-        <di:waypoint x="390" y="118" />
+      <bpmndi:BPMNEdge id="Flow_19rz74l_di" bpmnElement="Flow_19rz74l">
+        <di:waypoint x="340" y="117" />
+        <di:waypoint x="360" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_PublishJob_ReviewApp_di" bpmnElement="Flow_PublishJob_ReviewApp">
-        <di:waypoint x="490" y="118" />
-        <di:waypoint x="540" y="118" />
+      <bpmndi:BPMNEdge id="Flow_0ovgwl7_di" bpmnElement="Flow_0ovgwl7">
+        <di:waypoint x="460" y="117" />
+        <di:waypoint x="480" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_ReviewApp_SuitableGateway_di" bpmnElement="Flow_ReviewApp_SuitableGateway">
-        <di:waypoint x="640" y="118" />
-        <di:waypoint x="695" y="118" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Suitable_No_di" bpmnElement="Flow_Suitable_No">
-        <di:waypoint x="745" y="118" />
-        <di:waypoint x="822" y="118" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Suitable_Yes_di" bpmnElement="Flow_Suitable_Yes">
-        <di:waypoint x="720" y="143" />
-        <di:waypoint x="720" y="210" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Schedule_Conduct_di" bpmnElement="Flow_Schedule_Conduct">
-        <di:waypoint x="670" y="250" />
-        <di:waypoint x="640" y="250" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Conduct_SelectedGateway_di" bpmnElement="Flow_Conduct_SelectedGateway">
-        <di:waypoint x="540" y="250" />
-        <di:waypoint x="465" y="250" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Selected_Yes_di" bpmnElement="Flow_Selected_Yes">
-        <di:waypoint x="440" y="275" />
-        <di:waypoint x="440" y="340" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_CandidateNotSelected_ReviewApp_di" bpmnElement="Flow_CandidateNotSelected_ReviewApp">
-        <di:waypoint x="440" y="225" />
-        <di:waypoint x="440" y="190" />
-        <di:waypoint x="590" y="190" />
-        <di:waypoint x="590" y="158" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Define_Prepare_di" bpmnElement="Flow_Define_Prepare">
-        <di:waypoint x="490" y="380" />
-        <di:waypoint x="540" y="380" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Prepare_Send_di" bpmnElement="Flow_Prepare_Send">
-        <di:waypoint x="640" y="380" />
-        <di:waypoint x="690" y="380" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Send_AcceptedGateway_di" bpmnElement="Flow_Send_AcceptedGateway">
-        <di:waypoint x="790" y="380" />
-        <di:waypoint x="845" y="380" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Accepted_Yes_di" bpmnElement="Flow_Accepted_Yes">
-        <di:waypoint x="870" y="405" />
-        <di:waypoint x="870" y="470" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_OfferNotAccepted_ReviewApp_di" bpmnElement="Flow_OfferNotAccepted_ReviewApp">
-        <di:waypoint x="895" y="380" />
-        <di:waypoint x="940" y="380" />
-        <di:waypoint x="940" y="40" />
-        <di:waypoint x="590" y="40" />
-        <di:waypoint x="590" y="78" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_Onboarding_Hired_di" bpmnElement="Flow_Onboarding_Hired">
-        <di:waypoint x="920" y="510" />
-        <di:waypoint x="972" y="510" />
+      <bpmndi:BPMNEdge id="Flow_0udsige_di" bpmnElement="Flow_0udsige">
+        <di:waypoint x="580" y="117" />
+        <di:waypoint x="612" y="117" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
