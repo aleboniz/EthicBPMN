@@ -72,6 +72,23 @@ elif st.session_state.stage == 'validation':
     st.info("Istruisci ogni elemento del processo (Task, Gateway ed Eventi) definendone le caratteristiche etiche.")
     
     with st.form(key="validation_form"):
+        st.markdown("### Selezione Regole di Audit")
+        st.caption("Seleziona quali regole includere nell'analisi. Di default sono tutte attive.")
+        
+        rule_names = {
+            1: "R1: Privacy (Critica)", 2: "R2: Supervisione (Critica)", 3: "R3: Equità (Critica)", 4: "R4: Conflitto (Critica)",
+            5: "R5: Anomalia (Alta)", 6: "R6: Neutralità (Alta)", 7: "R7: Responsabilità (Alta)",
+            8: "R8: Appello (Media)", 9: "R9: Trasparenza (Media)",
+            10: "R10: Benessere (Bassa)", 11: "R11: Proporzionalità (Bassa)", 12: "R12: Disconnessione (Bassa)"
+        }
+        
+        active_rules = []
+        r_cols = st.columns(4) # Creiamo 4 colonne per un layout compatto
+        for i, (r_id, r_name) in enumerate(rule_names.items()):
+            # Distribuiamo le checkbox sulle 4 colonne
+            if r_cols[i % 4].checkbox(r_name, value=True, key=f"chk_rule_{r_id}"):
+                active_rules.append(r_id)
+
         # Iteriamo su TUTTI i nodi estratti dal parser (inclusi eventi e gateway)
         for node in st.session_state.nodes:
             if hasattr(node, 'profile') and node.profile:
@@ -112,12 +129,13 @@ elif st.session_state.stage == 'validation':
     if submitted:
         engine = EthicRuleEngine(st.session_state.nodes)
         ai_assistant = AIAssistant()
-        violations = engine.run_all_rules()
+        violations = engine.run_all_rules(active_rules=active_rules)
 
         reengineering = ai_assistant.generate_reengineering_proposals(
             st.session_state.nodes, 
             violations, 
-            custom_focus=custom_focus
+            custom_focus=custom_focus,
+            active_rules=active_rules
         )
 
         st.session_state.analysis_data = {
@@ -126,7 +144,8 @@ elif st.session_state.stage == 'validation':
             'metrics': engine.calculate_eps_metrics(),
             'ai_feedback': ai_assistant.analyze_process_semantics(
                 st.session_state.nodes, 
-                custom_focus=custom_focus
+                custom_focus=custom_focus,
+                active_rules=active_rules
             ),
             'reengineering': reengineering
         }
@@ -144,8 +163,8 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
 
     st.success("Analisi Completata!")
     col1, col2, col3 = st.columns(3)
-    col1.metric("EPS Score", f"{data['metrics']['eps']:.2f}", help="Ethical Process Score (EPS): Livello di conformità globale.")
-    col2.metric("ERI Index", f"{data['metrics']['eri']:.2f}", help="Ethical Risk Index (ERI): Percentuale di rischio etico rilevata.")
+    col1.metric("EPS Score", f"{data['metrics']['eps']:.2f}", help="Ethical Process Score (EPS): Livello di conformità globale. Tanto più il valore si avvicina a 1.00, tanto più il processo rispetta le regole etiche.")
+    col2.metric("ERI Index", f"{data['metrics']['eri']:.2f}", help="Ethical Risk Index (ERI): Si calcola come quoziente tra le violazioni riscontrate e il rischio potenziale massimo del processo, sulla base delle regole valutate.")
     col3.metric("Violazioni Rilevate", len(data['violations']), help="Numero totale di criticità etiche riscontrate.")
 
     st.divider()

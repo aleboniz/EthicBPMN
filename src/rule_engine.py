@@ -6,31 +6,35 @@ class EthicRuleEngine:
         self.nodes = {node.id: node for node in nodes}
         self.violations = []
 
-    def run_all_rules(self) -> list[Violation]:
-        """Esegue le 11 regole etiche del framework EthicBPMN."""
+    def run_all_rules(self, active_rules=None) -> list[Violation]:
+        """Esegue le regole etiche del framework EthicBPMN filtrate per scope."""
+        # Salviamo le regole attive per usarle anche nel calcolo matematico. 
+        # Se non viene passato nulla (es. file di test), le teniamo attive tutte e 12.
+        self.active_rules = active_rules if active_rules is not None else list(range(1, 13))
+
         for node_id, node in self.nodes.items():
             if not node.profile:
                 continue
             
             # LIVELLO 1: REGOLE CRITICHE
-            self._check_rule_1_privacy(node)
-            self._check_rule_2_supervisione(node)
-            self._check_rule_3_equita(node)
-            self._check_rule_4_conflitto_interessi(node)
+            if 1 in self.active_rules: self._check_rule_1_privacy(node)
+            if 2 in self.active_rules: self._check_rule_2_supervisione(node)
+            if 3 in self.active_rules: self._check_rule_3_equita(node)
+            if 4 in self.active_rules: self._check_rule_4_conflitto_interessi(node)
 
             # LIVELLO 2: REGOLE ALTE
-            self._check_rule_5_contestualizzazione_anomalia(node)
-            self._check_rule_6_neutralita_diritti(node)
-            self._check_rule_7_responsabilita(node)
+            if 5 in self.active_rules: self._check_rule_5_contestualizzazione_anomalia(node)
+            if 6 in self.active_rules: self._check_rule_6_neutralita_diritti(node)
+            if 7 in self.active_rules: self._check_rule_7_responsabilita(node)
 
             # LIVELLO 3: REGOLE MEDIE
-            self._check_rule_8_appello(node)
-            self._check_rule_9_trasparenza(node)
+            if 8 in self.active_rules: self._check_rule_8_appello(node)
+            if 9 in self.active_rules: self._check_rule_9_trasparenza(node)
 
             # LIVELLO 4: REGOLE BASSE 
-            self._check_rule_10_benessere(node)
-            self._check_rule_11_proporzionalita(node)
-            self._check_rule_12_disconnessione(node)
+            if 10 in self.active_rules: self._check_rule_10_benessere(node)
+            if 11 in self.active_rules: self._check_rule_11_proporzionalita(node)
+            if 12 in self.active_rules: self._check_rule_12_disconnessione(node)
 
         return self.violations
 
@@ -139,52 +143,48 @@ class EthicRuleEngine:
             ))
 
     def calculate_eps_metrics(self) -> dict:
-        """Calcola EPS e ERI basandosi su 4 pesi (CRITICA=4, ALTA=3, MEDIA=2, BASSA=1) per le 11 regole."""
+        """Calcola EPS e ERI basandosi solo sulle regole attive e sui trigger esatti."""
         r_max = 0
         r_obs = 0
 
-        # 1. Rischio Massimo
+        # Recuperiamo le regole attive
+        active_rules = getattr(self, 'active_rules', list(range(1, 13)))
+
+        # 1. Calcolo del Serbatoio di Rischio Massimo (R_max) tarato al millimetro
         for node_id, node in self.nodes.items():
             if node.profile:
-                # Regola 1 e 3 (Critiche - Peso 4)
-                if node.profile.sensitive_data:
-                    r_max += 8  # 4 + 4
-                # Regola 2 (Critica - Peso 4)
-                if node.profile.is_automated and node.profile.critical_task:
-                    r_max += 4
-                # Regola 4 (Critica - Peso 4)
-                if node.profile.type in ["Decision", "Evaluation"]: 
-                    r_max += 4 
-                # Regola 5 (Alta - Peso 3)
-                if node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower()):
-                    r_max += 3
-                # Regola 6 (Alta - Peso 3)
-                if node.profile.equity_action != EquityAction.NONE:
-                    r_max += 3
-                # Regola 7, 8, 9 (Alta=3, Media=2, Media=2) applicabili a Critical Tasks
-                if node.profile.critical_task:
-                    r_max += 7  # 3 + 2 + 2
-                # Regola 10 (Bassa - Peso 1)
-                if node.profile.impacts_wellbeing:
-                    r_max += 1
-                # Regola 11 (Bassa - Peso 1) si applica sempre per la proporzionalità globale
-                r_max += 1
-                # Regola 12 (Bassa - Peso 1)
-                if node.profile.outside_working_hours:
-                    r_max += 1
+                # REGOLE CRITICHE (Peso 4)
+                if 1 in active_rules and node.profile.sensitive_data: r_max += 4
+                if 2 in active_rules and node.profile.is_automated and node.profile.critical_task: r_max += 4
+                if 3 in active_rules and node.profile.sensitive_data and node.profile.is_automated: r_max += 4
+                if 4 in active_rules and node.profile.type in ["Decision", "Evaluation"]: r_max += 4 
+                
+                # REGOLE ALTE (Peso 3)
+                if 5 in active_rules and node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower()): r_max += 3
+                if 6 in active_rules and node.profile.equity_action != EquityAction.NONE: r_max += 3
+                if 7 in active_rules and node.profile.critical_task: r_max += 3
+                
+                # REGOLE MEDIE (Peso 2)
+                if 8 in active_rules and node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()): r_max += 2
+                if 9 in active_rules and node.profile.critical_task: r_max += 2
+                
+                # REGOLE BASSE (Peso 1)
+                if 10 in active_rules and node.profile.impacts_wellbeing: r_max += 1
+                if 11 in active_rules and (node.profile.type == "Monitoring" or "report" in node.name.lower()): r_max += 1
+                if 12 in active_rules and node.profile.outside_working_hours: r_max += 1
 
-        # 2. Rischio Osservato (Somma delle violazioni reali)
+        # 2. Calcolo del Rischio Osservato (R_obs) in base ai pesi delle violazioni
         for v in self.violations:
             if v.level == RuleLevel.ERROR:
-                r_obs += 4     # Regole Critiche
+                r_obs += 4     
             elif v.level == RuleLevel.WARNING:
-                r_obs += 3     # Regole Alte
+                r_obs += 3     
             elif v.level == RuleLevel.INFO:
-                r_obs += 2     # Regole Medie
+                r_obs += 2     
             elif v.level == RuleLevel.SUGGESTION:
-                r_obs += 1     # Regole Basse
+                r_obs += 1     
 
-        # 3. Calcolo Indici
+        # 3. Formule di Normalizzazione ERI e EPS
         eri = (r_obs / r_max) if r_max > 0 else 0.0
         eps = 1.0 - eri
 
