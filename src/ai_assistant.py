@@ -46,3 +46,47 @@ class AIAssistant:
             return response.choices[0].message.content
         except Exception as e:
             return f"Errore durante la chiamata ad OpenAI: {str(e)}"
+
+    def generate_reengineering_proposals(self, nodes: list, violations: list) -> str:
+        """Genera una proposta di reingegnerizzazione (modello TO-BE) basata sulle violazioni."""
+        if not self.client:
+            return "API LLM non disponibile. Modulo di reingegnerizzazione disabilitato."
+
+        if not violations:
+            return "**Il processo è già ottimizzato!**\nNon sono state rilevate violazioni strutturali o parametriche. Si consiglia di mantenere il monitoraggio continuo per assicurare che le performance etiche non decadano nel tempo."
+
+        # Prepariamo il riassunto strutturale
+        process_summary = "STRUTTURA DEL PROCESSO (AS-IS):\n"
+        for node in nodes:
+            process_summary += f"- Nodo: {node.name} (Tipo: {node.type_node})\n"
+
+        # Prepariamo l'elenco dei "sintomi" (violazioni)
+        violations_summary = "CRITICITÀ RILEVATE DAL RULE ENGINE:\n"
+        for v in violations:
+            violations_summary += f"- Regola {v.rule_number} ({v.rule_name}) violata sul task '{v.target_node}': {v.message}\n"
+
+        prompt = f"""
+        Sei un Senior Business Process Engineer e un esperto di Etica dell'AI Act.
+        Il seguente processo aziendale è stato analizzato e presenta alcune violazioni etiche.
+        
+        {process_summary}
+        
+        {violations_summary}
+        
+        Scrivi una "Proposta di Reingegnerizzazione (Modello TO-BE)" rivolta al Process Owner.
+        Non limitarti a ripetere gli errori, ma suggerisci CONCRETAMENTE come ridisegnare il BPMN
+        per risolvere i problemi (es. "aggiungere un User Task di revisione umana", 
+        "inserire un Catch Event per i ricorsi", "dividere il task in due per minimizzare i dati").
+        Sii schematico, professionale, orientato al business e usa elenchi puntati. 
+        Mantieni la risposta sotto le 250 parole.
+        """
+
+        try:
+            response = self.client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4 # Temperatura bassa per risposte più logiche e meno fantasiose
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            return f"Errore durante la generazione della proposta: {str(e)}"

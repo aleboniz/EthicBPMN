@@ -39,12 +39,15 @@ if process_button:
             
             ai_feedback = ai_assistant.analyze_process_semantics(nodes)
 
+            reengineering_proposals = ai_assistant.generate_reengineering_proposals(nodes, violations)
+
             st.session_state.analysis_data = {
                 'nodes': nodes,
                 'violations': violations,
                 'metrics': metrics,
                 'ai_feedback': ai_feedback,
-                'bpmn_target': uploaded_file
+                'bpmn_target': uploaded_file,
+                'reengineering': reengineering_proposals
             }
         except Exception as e:
             st.error(f"Si è verificato un errore durante l'analisi: {e}")
@@ -97,11 +100,16 @@ if st.session_state.analysis_data is not None:
     
     st.divider()
 
+    reengineering_proposals = data.get('reengineering', "Nessuna proposta disponibile.")
+
     c_left, c_right = st.columns([3, 1])
     
     with c_left:
         st.subheader("Analisi dell'Assistente AI")
         st.info(ai_feedback)
+
+        st.subheader("💡 Proposte di Reingegnerizzazione (Modello TO-BE)")
+        st.success(reengineering_proposals)
 
     with c_right:
         st.subheader("Esporta Dati")
