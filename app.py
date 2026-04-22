@@ -36,6 +36,13 @@ if 'bpmn_xml_raw' not in st.session_state:
 with st.sidebar:
     st.header("Configurazione")
     uploaded_file = st.file_uploader("Carica file .bpmn", type="bpmn")
+
+    custom_focus = st.text_area(
+        label="Focus Analisi (Opzionale)", 
+        placeholder="Es: Concentrati sul rischio di discriminazione di genere...",
+        help="Scrivi qui se vuoi che l'Intelligenza Artificiale presti particolare attenzione a un aspetto specifico del processo durante l'analisi semantica."
+    )
+
     process_button = st.button("Avvia Analisi", use_container_width=True)
     
     if st.session_state.stage != 'upload':
@@ -100,15 +107,23 @@ elif st.session_state.stage == 'validation':
         engine = EthicRuleEngine(st.session_state.nodes)
         ai_assistant = AIAssistant()
         violations = engine.run_all_rules()
-   
-        reengineering = ai_assistant.generate_reengineering_proposals(st.session_state.nodes, violations)
+
+        reengineering = ai_assistant.generate_reengineering_proposals(
+            st.session_state.nodes, 
+            violations, 
+            custom_focus=custom_focus
+        )
 
         st.session_state.analysis_data = {
             'nodes': st.session_state.nodes,
             'violations': violations,
             'metrics': engine.calculate_eps_metrics(),
-            'ai_feedback': ai_assistant.analyze_process_semantics(st.session_state.nodes),
-            'reengineering': reengineering # Salviamo la parte del compagno
+            # Passiamo il custom_focus all'analisi semantica
+            'ai_feedback': ai_assistant.analyze_process_semantics(
+                st.session_state.nodes, 
+                custom_focus=custom_focus
+            ),
+            'reengineering': reengineering
         }
         st.session_state.stage = 'dashboard'
         st.rerun()
@@ -153,6 +168,8 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
     cl, cr = st.columns([3, 1])
     with cl:
         st.subheader("Analisi dell'Assistente AI")
+        if 'custom_focus' in globals() and custom_focus.strip():
+            st.caption(f"**Focus richiesto:** *{custom_focus}*")
         st.info(data['ai_feedback'])
 
         st.subheader("Proposte di Reingegnerizzazione (Modello TO-BE)")
