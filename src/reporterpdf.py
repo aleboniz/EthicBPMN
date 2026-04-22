@@ -3,7 +3,7 @@ from datetime import datetime
 
 class PDFReportGenerator:
     @staticmethod
-    def generate_pdf(violations, ai_feedback, metrics, nodes, output_path="report_audit.pdf"):
+    def generate_pdf(violations, ai_feedback, metrics, nodes, reengineering_proposals, output_path="report_audit.pdf"):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_auto_page_break(auto=True, margin=15)
@@ -130,5 +130,14 @@ class PDFReportGenerator:
         pdf.cell(0, 10, "4. Parere dell'Assistente AI", ln=True, fill=True)
         pdf.set_font("Arial", "", 10) 
         pdf.multi_cell(0, 6, clean(ai_feedback))
+
+        pdf.ln(8)
+        pdf.set_fill_color(230, 245, 230) # Sfondo verde
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 10, clean("5. Proposte di Reingegnerizzazione (Modello TO-BE)"), ln=True, fill=True)
+        pdf.set_font("Arial", "", 10)
+        pdf.ln(2)
+        clean_proposal = str(reengineering_proposals).replace("**", "").replace("#", "")
+        pdf.multi_cell(0, 6, clean(clean_proposal))
 
         pdf.output(output_path)

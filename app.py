@@ -116,7 +116,7 @@ if st.session_state.analysis_data is not None:
         
         # PDF 
         nome_file_pdf = "report_audit.pdf"
-        PDFReportGenerator.generate_pdf(violations, ai_feedback, metrics, nodes, output_path=nome_file_pdf)
+        PDFReportGenerator.generate_pdf(violations, ai_feedback, metrics, nodes, reengineering_proposals, output_path=nome_file_pdf)
         with open(nome_file_pdf, "rb") as f:
             st.download_button(
                 label="Scarica Report PDF",
