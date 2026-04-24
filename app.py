@@ -123,11 +123,18 @@ elif st.session_state.stage == 'validation':
                 node.profile.actor = i1.text_input("Attore / Esecutore", value=node.profile.actor or "", key=f"act_{node.id}")
                 node.profile.beneficiary = i2.text_input("Beneficiari / Interessati", value=node.profile.beneficiary or "", key=f"ben_{node.id}")
 
-                if has_acc:
-                    node.profile.acc_owner = st.text_input("Accountability Owner (Responsabile)", value=node.profile.acc_owner or "", key=f"acc_name_{node.id}")
-                else:
-                    node.profile.acc_owner = None
-                node.profile.equity_note = st.text_area("Note Etiche/Equità", value=node.profile.equity_note or "", height=80, key=f"eqn_{node.id}")
+                equity_options = ["NULL", "HEALTH_RECOVERY", "CAREGIVING", "DISABILITY_SUPPORT"]
+                current_index = 0
+                if node.profile.equity_note in equity_options:
+                    current_index = equity_options.index(node.profile.equity_note)
+                
+                node.profile.equity_note = st.selectbox(
+                    "Tipologia di Supporto/Equità (Equity Note)", 
+                    options=equity_options,
+                    index=current_index,
+                    key=f"eqn_{node.id}"
+                )
+                
                 st.markdown("---")
         
         submitted = st.form_submit_button("Conferma Parametri e Genera Audit", use_container_width=True)
