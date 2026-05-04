@@ -45,6 +45,8 @@ class BpmnNode(BaseModel):
     type_node: str # es. 'bpmn:serviceTask', 'bpmn:userTask', 'bpmn:exclusiveGateway'
     profile: Optional[TaskProfile] = None
     outgoing_flows: List[str] = []
+    pool: Optional[str] = None
+    lane: Optional[str] = None
 
 class Violation(BaseModel):
     rule_number: int
