@@ -115,9 +115,9 @@ class AIAssistant:
 
         if not violations:
             if lang == "ITA":
-                return "🎉 **Il processo è già ottimizzato!**\nNon sono state rilevate violazioni strutturali o parametriche."
+                return "**Il processo è già ottimizzato!**\nNon sono state rilevate violazioni strutturali o parametriche."
             else:
-                return "🎉 **The process is already optimized!**\nNo structural or parametric violations were detected."
+                return "**The process is already optimized!**\nNo structural or parametric violations were detected."
 
         node_label = "Nodo" if lang == "ITA" else "Node"
         type_label = "Tipo" if lang == "ITA" else "Type"

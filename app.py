@@ -264,6 +264,21 @@ elif st.session_state.stage == 'validation':
         st.rerun()
 
 elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
+    
+    js_scroll = """
+    <script>
+        setTimeout(function() {
+            var mainContainer = window.parent.document.querySelector('[data-testid="stMain"]');
+            if (mainContainer) {
+                mainContainer.scrollTo({top: 0, behavior: 'smooth'});
+            } else {
+                window.parent.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        }, 100);
+    </script>
+    """
+    st.components.v1.html(js_scroll, height=0)
+
     data = st.session_state.analysis_data
     if not os.path.exists("temp_process.bpmn") and st.session_state.bpmn_xml_raw:
         with open("temp_process.bpmn", "w", encoding="utf-8") as f:
