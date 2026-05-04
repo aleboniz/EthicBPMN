@@ -6,11 +6,10 @@ class EthicRuleEngine:
         self.nodes = {node.id: node for node in nodes}
         self.violations = []
 
-    def run_all_rules(self, active_rules=None) -> list[Violation]:
-        """Esegue le regole etiche del framework EthicBPMN filtrate per scope."""
-        # Salviamo le regole attive per usarle anche nel calcolo matematico. 
-        # Se non viene passato nulla (es. file di test), le teniamo attive tutte e 12.
+    def run_all_rules(self, active_rules=None, lang="ITA") -> list[Violation]:
+        """Esegue le regole etiche del framework EthicBPMN filtrate per scope e lingua."""
         self.active_rules = active_rules if active_rules is not None else list(range(1, 13))
+        self.lang = lang # Salviamo la lingua per i messaggi
 
         for node_id, node in self.nodes.items():
             if not node.profile:
@@ -43,8 +42,9 @@ class EthicRuleEngine:
         if node.profile.sensitive_data:
             has_consent = any("consenso" in n.name.lower() or "consent" in n.name.lower() for n in self.nodes.values())
             if not has_consent:
-                self._add_violation(1, "Privacy e Minimizzazione", RuleLevel.ERROR, node.id, 
-                                    "Il task tratta dati sensibili ma manca un flusso di 'Acquisizione Consenso Informato'.")
+                msg = ("Il task tratta dati sensibili ma manca un flusso di 'Acquisizione Consenso Informato'." if self.lang == "ITA" 
+                       else "The task processes sensitive data but lacks an 'Informed Consent Acquisition' flow.")
+                self._add_violation(1, "Privacy", RuleLevel.ERROR, node.id, msg)
 
     def _check_rule_2_supervisione(self, node: BpmnNode):
         if node.profile.is_automated and node.profile.critical_task:
@@ -55,99 +55,98 @@ class EthicRuleEngine:
                     has_human_override = True
             
             if not has_human_override:
-                self._add_violation(2, "Supervisione Umana", RuleLevel.ERROR, node.id, 
-                                    "L'algoritmo prende una decisione critica senza la validazione obbligatoria di un operatore umano.")
+                msg = ("L'algoritmo prende una decisione critica senza la validazione obbligatoria di un operatore umano." if self.lang == "ITA" 
+                       else "The algorithm makes a critical decision without the mandatory validation of a human operator.")
+                self._add_violation(2, "Supervision", RuleLevel.ERROR, node.id, msg)
 
     def _check_rule_3_equita(self, node: BpmnNode):
         if node.profile.sensitive_data and node.profile.is_automated:
             if "blind" not in node.name.lower() and "anonimo" not in node.name.lower():
-                self._add_violation(3, "Equità e Antidiscriminazione", RuleLevel.ERROR, node.id, 
-                                    "Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing'.")
+                msg = ("Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing'." if self.lang == "ITA" 
+                       else "Sensitive data processed by an algorithm without evidence of 'Blind Processing'.")
+                self._add_violation(3, "Equity", RuleLevel.ERROR, node.id, msg)
 
     def _check_rule_4_conflitto_interessi(self, node: BpmnNode):
         if node.profile.type in ["Decision", "Evaluation"]:
             act = str(node.profile.actor).strip().lower() if node.profile.actor else ""
-            
             if node.profile.beneficiary:
                 beneficiaries_list = [b.strip().lower() for b in str(node.profile.beneficiary).split(',')]
                 if act and act in beneficiaries_list:
-                    self._add_violation(4, "Prevenzione del Conflitto di Interessi", RuleLevel.ERROR,  node.id, 
-                        f"L'attore ({node.profile.actor}) è incluso tra i beneficiari della valutazione. "
-                        f"L'imparzialità è compromessa."
-                    )
+                    msg = (f"L'attore ({node.profile.actor}) è incluso tra i beneficiari della valutazione. L'imparzialità è compromessa." if self.lang == "ITA" 
+                           else f"The actor ({node.profile.actor}) is included among the beneficiaries of the evaluation. Impartiality is compromised.")
+                    self._add_violation(4, "Conflict of Interest", RuleLevel.ERROR, node.id, msg)
 
     # REGOLE ALTE
     def _check_rule_5_contestualizzazione_anomalia(self, node: BpmnNode):
         if node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower()):
             has_investigation = any(n.type_node == 'bpmn:userTask' for n_id in node.outgoing_flows if (n := self.nodes.get(n_id)))
             if not has_investigation:
-                self._add_violation(5, "Contestualizzazione Anomalia", RuleLevel.WARNING, node.id, 
-                                    "L'anomalia di performance sfocia in una decisione automatica senza controllo investigativo.")
+                msg = ("L'anomalia di performance sfocia in una decisione automatica senza controllo investigativo." if self.lang == "ITA" 
+                       else "Performance anomaly leads to an automatic decision without investigative control.")
+                self._add_violation(5, "Anomaly Context", RuleLevel.WARNING, node.id, msg)
 
     def _check_rule_6_neutralita_diritti(self, node: BpmnNode):
         if node.profile.equity_action != EquityAction.NONE:
-            self._add_violation(6, "Neutralità dei Diritti", RuleLevel.WARNING, node.id, 
-                                "Logica di equità applicata. Assicurarsi che i report KPI siano normalizzati.")
+            msg = ("Logica di equità applicata. Assicurarsi che i report KPI siano normalizzati." if self.lang == "ITA" 
+                   else "Equity logic applied. Ensure KPI reports are normalized.")
+            self._add_violation(6, "Neutrality", RuleLevel.WARNING, node.id, msg)
 
     def _check_rule_7_responsabilita(self, node: BpmnNode):
         if node.profile.critical_task:
             if not node.profile.acc_owner or node.profile.acc_owner.lower() == "null":
-                self._add_violation(7, "Responsabilità Identificata", RuleLevel.WARNING, node.id, 
-                                    "Azione ad alto rischio senza un titolare umano associato.")
+                msg = ("Azione ad alto rischio senza un titolare umano associato." if self.lang == "ITA" 
+                       else "High-risk action without an associated human owner.")
+                self._add_violation(7, "Responsibility", RuleLevel.WARNING, node.id, msg)
 
     # REGOLE MEDIE
     def _check_rule_8_appello(self, node: BpmnNode):
         if node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()):
             has_catch_event = any(n.type_node == 'bpmn:intermediateCatchEvent' for n in self.nodes.values())
             if not has_catch_event:
-                self._add_violation(8, "Reversibilità e Appello", RuleLevel.INFO, node.id, 
-                                    "Decisione sfavorevole priva di una finestra di ricorso per l'utente.")
+                msg = ("Decisione sfavorevole priva di una finestra di ricorso per l'utente." if self.lang == "ITA" 
+                       else "Adverse decision lacking a recourse window for the user.")
+                self._add_violation(8, "Appeal", RuleLevel.INFO, node.id, msg)
 
     def _check_rule_9_trasparenza(self, node: BpmnNode):
         if node.profile.critical_task and not node.profile.criteria_defined:
-            self._add_violation(9, "Trasparenza e Spiegabilità", RuleLevel.INFO, node.id, 
-                                "Punto decisionale opaco: i criteri non sono esplicitati.")
+            msg = ("Punto decisionale opaco: i criteri non sono esplicitati." if self.lang == "ITA" 
+                   else "Opaque decision point: criteria are not explicit.")
+            self._add_violation(9, "Transparency", RuleLevel.INFO, node.id, msg)
 
     # REGOLE BASSE
     def _check_rule_10_benessere(self, node: BpmnNode):
         if node.profile.impacts_wellbeing:
             has_rest = any("riposo" in n.name.lower() or "pausa" in n.name.lower() for n in self.nodes.values())
             if not has_rest:
-                self._add_violation(10, "Beneficenza e Benessere", RuleLevel.SUGGESTION, node.id, 
-                                    "Task ad alto impatto cognitivo. Si suggerisce di inserire pause.")
+                msg = ("Task ad alto impatto cognitivo. Si suggerisce di inserire pause." if self.lang == "ITA" 
+                       else "High cognitive impact task. It is suggested to insert breaks.")
+                self._add_violation(10, "Well-being", RuleLevel.SUGGESTION, node.id, msg)
 
     def _check_rule_11_proporzionalita(self, node: BpmnNode):
         if node.profile.type == "Monitoring" or "report" in node.name.lower():
-            self._add_violation(11, "Proporzionalità dello Sforzo", RuleLevel.SUGGESTION, node.id, 
-                                "Task di monitoraggio. Verificare onerosità rispetto all'attività operativa.")
+            msg = ("Task di monitoraggio. Verificare onerosità rispetto all'attività operativa." if self.lang == "ITA" 
+                   else "Monitoring task. Verify burden relative to operational activity.")
+            self._add_violation(11, "Proportionality", RuleLevel.SUGGESTION, node.id, msg)
 
     def _check_rule_12_disconnessione(self, node: BpmnNode):
         if node.profile.outside_working_hours:
-            self._add_violation(12, "Diritto alla Disconnessione", RuleLevel.SUGGESTION, node.id, 
-                                "Task eseguito fuori orario. Usare TimerEvent per gestire la notifica nel turno successivo.")
+            msg = ("Task eseguito fuori orario. Usare TimerEvent per gestire la notifica nel turno successivo." if self.lang == "ITA" 
+                   else "Task executed off-hours. Use TimerEvent to manage notification in the next shift.")
+            self._add_violation(12, "Disconnection", RuleLevel.SUGGESTION, node.id, msg)
 
 
     def _add_violation(self, r_num: int, r_name: str, level: RuleLevel, target_id: str, msg: str):
-        node = self.nodes.get(target_id)
-        node_display = node.name if node and node.name else target_id
-        
-        # Inseriamo il nome nel messaggio per chiarezza
-        # full_message = f"[{node_display}] {msg}"
-        
         self.violations.append(Violation(
             rule_number=r_num, 
             rule_name=r_name, 
             level=level, 
             target_node=target_id, 
-            message=msg #full_message
+            message=msg
             ))
 
     def calculate_eps_metrics(self) -> dict:
-        """Calcola EPS e ERI basandosi solo sulle regole attive e sui trigger esatti."""
         r_max = 0
         r_obs = 0
-
-        # Recuperiamo le regole attive
         active_rules = getattr(self, 'active_rules', list(range(1, 13)))
 
         # 1. Calcolo del Serbatoio di Rischio Massimo (R_max) tarato al millimetro
@@ -158,16 +157,13 @@ class EthicRuleEngine:
                 if 2 in active_rules and node.profile.is_automated and node.profile.critical_task: r_max += 4
                 if 3 in active_rules and node.profile.sensitive_data and node.profile.is_automated: r_max += 4
                 if 4 in active_rules and node.profile.type in ["Decision", "Evaluation"]: r_max += 4 
-                
                 # REGOLE ALTE (Peso 3)
                 if 5 in active_rules and node.type_node in ['bpmn:exclusiveGateway', 'bpmn:boundaryEvent'] and ('anomali' in node.name.lower() or 'performance' in node.name.lower()): r_max += 3
                 if 6 in active_rules and node.profile.equity_action != EquityAction.NONE: r_max += 3
                 if 7 in active_rules and node.profile.critical_task: r_max += 3
-                
-                # REGOLE MEDIE (Peso 2)
+                # REGOLE ALTE (Peso 3)
                 if 8 in active_rules and node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()): r_max += 2
                 if 9 in active_rules and node.profile.critical_task: r_max += 2
-                
                 # REGOLE BASSE (Peso 1)
                 if 10 in active_rules and node.profile.impacts_wellbeing: r_max += 1
                 if 11 in active_rules and (node.profile.type == "Monitoring" or "report" in node.name.lower()): r_max += 1
@@ -175,22 +171,16 @@ class EthicRuleEngine:
 
         # 2. Calcolo del Rischio Osservato (R_obs) in base ai pesi delle violazioni
         for v in self.violations:
-            if v.level == RuleLevel.ERROR:
-                r_obs += 4     
-            elif v.level == RuleLevel.WARNING:
-                r_obs += 3     
-            elif v.level == RuleLevel.INFO:
-                r_obs += 2     
-            elif v.level == RuleLevel.SUGGESTION:
-                r_obs += 1     
+            if v.level == RuleLevel.ERROR: r_obs += 4     
+            elif v.level == RuleLevel.WARNING: r_obs += 3     
+            elif v.level == RuleLevel.INFO: r_obs += 2     
+            elif v.level == RuleLevel.SUGGESTION: r_obs += 1     
 
         # 3. Formule di Normalizzazione ERI e EPS
         eri = (r_obs / r_max) if r_max > 0 else 0.0
         eps = 1.0 - eri
 
         return {
-            "r_max": r_max,
-            "r_obs": r_obs,
-            "eri": round(eri, 2),
-            "eps": round(eps, 2)
+            "r_max": r_max, "r_obs": r_obs,
+            "eri": round(eri, 2), "eps": round(eps, 2)
         }
