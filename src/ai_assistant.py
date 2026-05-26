@@ -7,22 +7,17 @@ import streamlit as st
 
 class AIAssistant:
     def __init__(self):
-        # 1. Carica il file .env in locale (viene ignorato sul Cloud se non c'è)
         load_dotenv(override=True) 
         
         self.api_key = None
-        
-        # 2. Tenta di recuperare la chiave da Streamlit Secrets (Modalità CLOUD)
         try:
             self.api_key = st.secrets.get("OPENAI_API_KEY")
         except Exception:
-            pass # Ignora eventuali errori se st.secrets non è configurato localmente
+            pass
             
-        # 3. Se non ha trovato la chiave nel Cloud, usa os.getenv (Modalità LOCALE)
         if not self.api_key:
             self.api_key = os.getenv("OPENAI_API_KEY")
 
-        # 4. Inizializzazione del client OpenAI puntato su Groq
         if self.api_key:
             self.client = OpenAI(
                 api_key=self.api_key,
