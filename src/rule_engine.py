@@ -100,11 +100,36 @@ class EthicRuleEngine:
 
     # REGOLE MEDIE
     def _check_rule_8_appello(self, node: BpmnNode):
-        if node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()):
-            has_catch_event = any(n.type_node == 'bpmn:intermediateCatchEvent' for n in self.nodes.values())
-            if not has_catch_event:
-                msg = ("Decisione sfavorevole priva di una finestra di ricorso per l'utente." if self.lang == "ITA" 
-                       else "Adverse decision lacking a recourse window for the user.")
+        parole_chiave_negative = [
+            "scart", "rifiut", "bocci", "negativ", "licenzi", 
+            "tagli", "sanzion", "multa", "sospend", "sospens", "errore"
+        ]
+       
+        if node.profile.critical_task and any(p in node.name.lower() for p in parole_chiave_negative):
+            
+            has_recourse_window = False
+            visitati = set()
+            
+            def esplora_percorso(current_node: BpmnNode):
+                nonlocal has_recourse_window
+                if not current_node or current_node.id in visitati or has_recourse_window:
+                    return
+                visitati.add(current_node.id)
+                
+                for next_id in current_node.outgoing_flows:
+                    next_node = self.nodes.get(next_id)
+                    if next_node:
+                        if next_node.type_node == 'bpmn:intermediateCatchEvent':
+                            has_recourse_window = True
+                            return
+                        if next_node.type_node != 'bpmn:endEvent':
+                            esplora_percorso(next_node)
+
+            esplora_percorso(node)
+            
+            if not has_recourse_window:
+                msg = ("Decisione sfavorevole priva di una finestra di ricorso." if self.lang == "ITA" 
+                       else "Adverse decision lacking a recourse window on its specific termination path.")
                 self._add_violation(8, "Appeal", RuleLevel.INFO, node.id, msg)
 
     def _check_rule_9_trasparenza(self, node: BpmnNode):
@@ -162,7 +187,7 @@ class EthicRuleEngine:
                 if 6 in active_rules and node.profile.equity_action != EquityAction.NONE: r_max += 3
                 if 7 in active_rules and node.profile.critical_task: r_max += 3
                 # REGOLE ALTE (Peso 3)
-                if 8 in active_rules and node.profile.critical_task and ("scart" in node.name.lower() or "rifiut" in node.name.lower()): r_max += 2
+                if 8 in active_rules and node.profile.critical_task and any(p in node.name.lower() for p in ["scart", "rifiut", "bocci", "negativ", "licenzi", "tagli", "sanzion", "multa", "sospend", "sospens", "errore"]): r_max += 2
                 if 9 in active_rules and node.profile.critical_task: r_max += 2
                 # REGOLE BASSE (Peso 1)
                 if 10 in active_rules and node.profile.impacts_wellbeing: r_max += 1
@@ -184,3 +209,6 @@ class EthicRuleEngine:
             "r_max": r_max, "r_obs": r_obs,
             "eri": round(eri, 2), "eps": round(eps, 2)
         }
+
+    
+   
