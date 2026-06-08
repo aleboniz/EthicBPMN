@@ -85,8 +85,19 @@ class EthicRuleEngine:
                        else "Performance anomaly leads to an automatic decision without investigative control.")
                 self._add_violation(5, "Anomaly Context", RuleLevel.WARNING, node.id, msg)
 
-    def _check_rule_6_neutralita_diritti(self, node: BpmnNode):       
-        if str(node.profile.equity_action) != EquityAction.NONE:
+    def _check_rule_6_neutralita_diritti(self, node: BpmnNode):
+        current_action = str(node.profile.equity_action).strip()
+        
+        if '.' in current_action:
+            current_action = current_action.split('.')[-1]
+            
+        azioni_positive_e_neutre = [
+            "Blind_Processing", "Human_Validation", "Context_Provided", 
+            "Right_to_Appeal", "Transparency", "Informed_Consent", 
+            "Independent_Review", "None", "NONE"
+        ]
+        
+        if current_action not in azioni_positive_e_neutre:
             msg = ("Logica di equità applicata. Assicurarsi che i report KPI siano normalizzati." if self.lang == "ITA" 
                    else "Equity logic applied. Ensure KPI reports are normalized.")
             self._add_violation(6, "Neutrality", RuleLevel.WARNING, node.id, msg)
