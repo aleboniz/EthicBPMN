@@ -41,7 +41,7 @@ class EthicRuleEngine:
     def _check_rule_1_privacy(self, node: BpmnNode):
         if node.profile.sensitive_data:
             has_consent = any("consenso" in n.name.lower() or "consent" in n.name.lower() for n in self.nodes.values())
-            if not has_consent:
+            if not has_consent and node.profile.equity_action != "Informed_Consent":
                 msg = ("Il task tratta dati sensibili ma manca un flusso di 'Acquisizione Consenso Informato'." if self.lang == "ITA" 
                        else "The task processes sensitive data but lacks an 'Informed Consent Acquisition' flow.")
                 self._add_violation(1, "Privacy", RuleLevel.ERROR, node.id, msg)
@@ -54,14 +54,14 @@ class EthicRuleEngine:
                 if next_node and next_node.type_node == 'bpmn:userTask':
                     has_human_override = True
             
-            if not has_human_override:
+            if not has_human_override and node.profile.equity_action != "Human_Validation":
                 msg = ("L'algoritmo prende una decisione critica senza la validazione obbligatoria di un operatore umano." if self.lang == "ITA" 
                        else "The algorithm makes a critical decision without the mandatory validation of a human operator.")
                 self._add_violation(2, "Supervision", RuleLevel.ERROR, node.id, msg)
 
     def _check_rule_3_equita(self, node: BpmnNode):
         if node.profile.sensitive_data and node.profile.is_automated:
-            if "blind" not in node.name.lower() and "anonimo" not in node.name.lower():
+            if "blind" not in node.name.lower() and "anonimo" not in node.name.lower() and node.profile.equity_action != "Blind_Processing":
                 msg = ("Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing'." if self.lang == "ITA" 
                        else "Sensitive data processed by an algorithm without evidence of 'Blind Processing'.")
                 self._add_violation(3, "Equity", RuleLevel.ERROR, node.id, msg)
@@ -86,7 +86,14 @@ class EthicRuleEngine:
                 self._add_violation(5, "Anomaly Context", RuleLevel.WARNING, node.id, msg)
 
     def _check_rule_6_neutralita_diritti(self, node: BpmnNode):
-        if node.profile.equity_action != EquityAction.NONE:
+        azioni_positive = [
+            "Blind_Processing", "Human_Validation", "Context_Provided", 
+            "Right_to_Appeal", "Transparency", "Informed_Consent", 
+            "Independent_Review", "None"
+        ]
+        
+        # Genera il warning solo se l'azione di equità è di manipolazione pura (es. Score_Boosting)
+        if str(node.profile.equity_action) not in azioni_positive:
             msg = ("Logica di equità applicata. Assicurarsi che i report KPI siano normalizzati." if self.lang == "ITA" 
                    else "Equity logic applied. Ensure KPI reports are normalized.")
             self._add_violation(6, "Neutrality", RuleLevel.WARNING, node.id, msg)

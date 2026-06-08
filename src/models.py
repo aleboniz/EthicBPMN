@@ -10,6 +10,13 @@ class EquityAction(str, Enum):
     THRESHOLD_ADJUSTMENT = "Threshold_Adjustment"
     TIME_EXTENSION = "Time_Extension"
     ALTERNATIVE_ROUTING = "Alternative_Routing"
+    BLIND_PROCESSING = "Blind_Processing"
+    HUMAN_VALIDATION = "Human_Validation"
+    CONTEXT_PROVIDED = "Context_Provided"
+    RIGHT_TO_APPEAL = "Right_to_Appeal"
+    TRANSPARENCY_LOG = "Transparency"
+    INFORMED_CONSENT = "Informed_Consent"
+    INDEPENDENT_REVIEW = "Independent_Review"
 
 class RuleLevel(str, Enum):
     ERROR = "CRITICA"
