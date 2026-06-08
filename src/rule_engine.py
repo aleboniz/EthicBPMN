@@ -92,9 +92,9 @@ class EthicRuleEngine:
             current_action = current_action.split('.')[-1]
             
         azioni_positive_e_neutre = [
-            "Blind_Processing", "Human_Validation", "Context_Provided", 
-            "Right_to_Appeal", "Transparency", "Informed_Consent", 
-            "Independent_Review", "None", "NONE"
+            "BLIND_PROCESSING", "HUMAN_VALIDATION", "CONTEXT_PROVIDED", 
+            "RIGHT_TO_APPEAL", "TRANSPARENCY_LOG", "INFORMED_CONSENT", 
+            "INDEPENDENT_REVIEW", "NONE"
         ]
         
         if current_action not in azioni_positive_e_neutre:
