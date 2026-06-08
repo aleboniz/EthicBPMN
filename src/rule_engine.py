@@ -41,7 +41,7 @@ class EthicRuleEngine:
     def _check_rule_1_privacy(self, node: BpmnNode):
         if node.profile.sensitive_data:
             has_consent = any("consenso" in n.name.lower() or "consent" in n.name.lower() for n in self.nodes.values())
-            if not has_consent and node.profile.equity_action != "Informed_Consent":
+            if not has_consent and node.profile.equity_action != EquityAction.INFORMED_CONSENT:
                 msg = ("Il task tratta dati sensibili ma manca un flusso di 'Acquisizione Consenso Informato'." if self.lang == "ITA" 
                        else "The task processes sensitive data but lacks an 'Informed Consent Acquisition' flow.")
                 self._add_violation(1, "Privacy", RuleLevel.ERROR, node.id, msg)
@@ -54,14 +54,14 @@ class EthicRuleEngine:
                 if next_node and next_node.type_node == 'bpmn:userTask':
                     has_human_override = True
             
-            if not has_human_override and node.profile.equity_action != "Human_Validation":
+            if not has_human_override and node.profile.equity_action != EquityAction.HUMAN_VALIDATION:
                 msg = ("L'algoritmo prende una decisione critica senza la validazione obbligatoria di un operatore umano." if self.lang == "ITA" 
                        else "The algorithm makes a critical decision without the mandatory validation of a human operator.")
                 self._add_violation(2, "Supervision", RuleLevel.ERROR, node.id, msg)
 
     def _check_rule_3_equita(self, node: BpmnNode):
         if node.profile.sensitive_data and node.profile.is_automated:
-            if "blind" not in node.name.lower() and "anonimo" not in node.name.lower() and node.profile.equity_action != "Blind_Processing":
+            if "blind" not in node.name.lower() and "anonimo" not in node.name.lower() and node.profile.equity_action != EquityAction.BLIND_PROCESSING:
                 msg = ("Dati sensibili elaborati da un algoritmo senza evidenza di 'Blind Processing'." if self.lang == "ITA" 
                        else "Sensitive data processed by an algorithm without evidence of 'Blind Processing'.")
                 self._add_violation(3, "Equity", RuleLevel.ERROR, node.id, msg)
