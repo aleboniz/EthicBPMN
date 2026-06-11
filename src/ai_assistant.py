@@ -74,7 +74,16 @@ class AIAssistant:
         
         process_summary = "Analizza questo processo BPMN per potenziali bias etici:\n" if lang == "ITA" else "Analyze this BPMN process for potential ethical biases:\n"
         for node in nodes:
-            process_summary += f"- {node_label}: {node.name} ({type_label}: {node.type_node})\n"
+            # Estrazione base
+            summary_line = f"- {node_label}: {node.name} ({type_label}: {node.type_node})"
+            
+            # Aggiunta dei parametri etici se presenti
+            if hasattr(node, 'profile') and node.profile:
+                p = node.profile
+                eq_action = str(p.equity_action).split('.')[-1] if p.equity_action else "None"
+                summary_line += f" -> [Auto: {p.is_automated}, Critico: {p.critical_task}, Sensibili: {p.sensitive_data}, Equity Action: {eq_action}]"
+            
+            process_summary += summary_line + "\n"
 
         scope_text = self._get_active_rule_names(active_rules, lang=lang)
 
@@ -133,7 +142,14 @@ class AIAssistant:
         
         process_summary = "STRUTTURA DEL PROCESSO (AS-IS):\n" if lang == "ITA" else "PROCESS STRUCTURE (AS-IS):\n"
         for node in nodes:
-            process_summary += f"- {node_label}: {node.name} ({type_label}: {node.type_node})\n"
+            summary_line = f"- {node_label}: {node.name} ({type_label}: {node.type_node})"
+            
+            if hasattr(node, 'profile') and node.profile:
+                p = node.profile
+                eq_action = str(p.equity_action).split('.')[-1] if p.equity_action else "None"
+                summary_line += f" -> [Auto: {p.is_automated}, Critico: {p.critical_task}, Sensibili: {p.sensitive_data}, Equity Action: {eq_action}]"
+                
+            process_summary += summary_line + "\n"
 
         violations_summary = "CRITICITÀ RILEVATE DAL RULE ENGINE:\n" if lang == "ITA" else "CRITICALITIES DETECTED BY THE RULE ENGINE:\n"
         for v in violations:
