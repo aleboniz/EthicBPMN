@@ -46,6 +46,7 @@ class BpmnParser:
                             }
 
         target_tags = [
+            'bpmn:startEvent', 'bpmn:endEvent',
             'bpmn:task', 'bpmn:serviceTask', 'bpmn:userTask', 
             'bpmn:sendTask', 'bpmn:businessRuleTask', 'bpmn:receiveTask',
             'bpmn:exclusiveGateway', 'bpmn:parallelGateway', 'bpmn:inclusiveGateway',
@@ -67,14 +68,15 @@ class BpmnParser:
                     node_name = elem.get('name')
                     
                     if not node_name:
-                        if tag == 'bpmn:intermediateCatchEvent': node_name = "Evento di Attesa"
+                        if tag == 'bpmn:startEvent': node_name = "Evento di Inizio"
+                        elif tag == 'bpmn:endEvent': node_name = "Evento di Fine"
+                        elif tag == 'bpmn:intermediateCatchEvent': node_name = "Evento di Attesa"
                         elif tag == 'bpmn:boundaryEvent': node_name = "Evento di Eccezione"
                         elif 'Gateway' in tag: node_name = "Bivio Decisionale"
                         elif tag == 'bpmn:intermediateThrowEvent': node_name = "Evento di Invio"
                         else: node_name = node_id
 
                     profile = self._extract_ethic_profile(elem)
-                    
                     org_info = org_map.get(node_id, {})
 
                     nodes.append(BpmnNode(
@@ -86,7 +88,45 @@ class BpmnParser:
                         pool=org_info.get("pool"),
                         lane=org_info.get("lane")  
                     ))
-        return nodes
+                    
+        return self._sort_nodes_by_flow(nodes)
+
+    def _sort_nodes_by_flow(self, nodes_list: list[BpmnNode]) -> list[BpmnNode]:
+        nodes_dict = {node.id: node for node in nodes_list}
+        
+        start_nodes = [n for n in nodes_list if n.type_node == 'bpmn:startEvent']
+        
+        if not start_nodes:
+            return [n for n in nodes_list if n.type_node not in ['bpmn:startEvent', 'bpmn:endEvent']]
+            
+        visited = set()
+        ordered_nodes = []
+        queue = [start.id for start in start_nodes]
+        
+        tipi_ignorati = ['bpmn:startEvent', 'bpmn:endEvent']
+        
+        while queue:
+            current_id = queue.pop(0)
+            
+            if current_id in visited:
+                continue
+                
+            visited.add(current_id)
+            current_node = nodes_dict.get(current_id)
+            
+            if current_node:
+                if current_node.type_node not in tipi_ignorati:
+                    ordered_nodes.append(current_node)
+                    
+                for next_id in current_node.outgoing_flows:
+                    if next_id not in visited:
+                        queue.append(next_id)
+                        
+        for node in nodes_list:
+            if node.id not in visited and node.type_node not in tipi_ignorati:
+                ordered_nodes.append(node)
+                
+        return ordered_nodes
 
     def _extract_ethic_profile(self, elem: ET.Element) -> TaskProfile | None:
         ext_elements = elem.find('bpmn:extensionElements', self.namespaces)
