@@ -93,11 +93,30 @@ class AIAssistant:
             if custom_focus.strip():
                 focus_instruction = f"\nDIRETTIVA DELL'UTENTE: L'utente ha richiesto di concentrare l'analisi specificamente su questo aspetto: '{custom_focus}'. Assicurati di dare massima priorità a questa tematica nella tua risposta.\n"
 
+            equity_glossary = """
+            IMPORTANTE: Le 'Equity Action' indicate nei task sono TUTELE POSITIVE GIA' IMPLEMENTATE, non sono rischi. 
+            - 'Blind_Processing': significa che i dati sensibili sono stati anonimizzati correttamente per prevenire bias. È un'ottima pratica.
+            - 'Context_Provided': significa che al lavoratore umano è stato fornito supporto per ridurre lo stress cognitivo.
+            - 'Right_to_Appeal': significa che l'utente ha diritto di ricorso.
+            - 'Transparency': significa che i criteri decisionali sono resi pubblici e chiari.
+            - 'Informed_Consent': significa che è stato raccolto il consenso privacy.
+            Se un task ha queste azioni, DEVI elogiarlo o considerarlo sicuro, NON segnalarlo come rischio opaco o discriminatorio!
+            """ if lang == "ITA" else """
+            IMPORTANT: 'Equity Actions' are POSITIVE SAFEGUARDS already implemented, not risks.
+            - 'Blind_Processing': sensitive data is anonymized to prevent bias. This is a best practice.
+            - 'Context_Provided': human workers are given context to reduce cognitive stress.
+            - 'Right_to_Appeal': the user is guaranteed the right to contest.
+            - 'Transparency': decision criteria are made clear and public.
+            - 'Informed_Consent': privacy consent was properly acquired.
+            If a task has these actions, praise it or consider it safe. DO NOT flag them as opaque or discriminatory risks!
+            """
+
             prompt = f"""
             Sei un Auditor che analizza i principi etici dei processi aziendali (BPMN).
             Analizza le caratteristiche, i nomi e i tipi dei seguenti task. 
             Ricerca potenziali rischi etici valutando: {active_rules_summary}
             {focus_instruction}
+            {equity_glossary}
             Fornisci un suggerimento breve (max 200 parole).
             {process_summary}
             """
@@ -112,6 +131,7 @@ class AIAssistant:
             Analyze the characteristics, names, and types of the following tasks. 
             Search for potential ethical risks by evaluating: {active_rules_summary}
             {focus_instruction}
+            {equity_glossary}
             Provide a brief suggestion (max 200 words).
             {process_summary}
             """
