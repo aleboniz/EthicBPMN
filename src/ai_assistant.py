@@ -124,10 +124,7 @@ class AIAssistant:
             Analizza le caratteristiche, i nomi e i tipi dei seguenti task. 
             Ricerca potenziali rischi etici valutando: {active_rules_summary}
             {focus_instruction}
-            {equity_glossary}
-            
-            Se il processo è ben progettato e protetto dalle 'Equity Action' procedurali, 
-            dichiara apertamente che è SICURO, OTTIMIZZATO e CONFORME. 
+            {equity_glossary} 
             
             Fornisci un suggerimento breve (max 200 parole).
             {process_summary}
