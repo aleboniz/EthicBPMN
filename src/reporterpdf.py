@@ -109,6 +109,12 @@ class PDFReportGenerator:
         for node in nodes:
             p = node.profile
             if p:
+                # 1. CONTROLLO SALTO PAGINA (Anti-rottura)
+                # Se rimangono pochi millimetri a fine pagina, forziamo il 
+                # salto prima di iniziare il blocco, così non si spezza a metà.
+                if pdf.get_y() > 255:
+                    pdf.add_page()
+
                 pdf.set_fill_color(*LIGHT_BLUE)
                 pdf.set_font("Arial", "B", 10)
                 pdf.set_text_color(*PRIMARY_BLUE)
@@ -116,28 +122,29 @@ class PDFReportGenerator:
                 
                 pdf.set_text_color(*TEXT_DARK)
                 pdf.set_font("Arial", "", 9)
-                
-                y_task_start = pdf.get_y() + 2
-                pdf.set_y(y_task_start)
+                pdf.ln(2)
                 
                 col_w = 90
-                pdf.set_x(15)
-                pdf.cell(col_w, 5, clean(f"- {T['auto']}: {T['yes'] if p.is_automated else T['no']}"), ln=True)
-                pdf.set_x(15)
-                pdf.cell(col_w, 5, clean(f"- {T['crit']}: {T['yes'] if p.critical_task else T['no']}"), ln=True)
-                pdf.set_x(15)
-                pdf.cell(col_w, 5, clean(f"- {T['sens']}: {T['yes'] if p.sensitive_data else T['no']}"), ln=True)
                 
-                y_after_left = pdf.get_y()
-                pdf.set_xy(105, y_task_start)
+                # 2. COSTRUZIONE PER RIGHE (Sostituisce il vecchio set_xy)
+                # Il primo cell ha ln=0 (non va a capo), il secondo ha ln=True (va a capo)
+                
+                # RIGA 1: Automatico | Impatto Benessere
+                pdf.set_x(15)
+                pdf.cell(col_w, 5, clean(f"- {T['auto']}: {T['yes'] if p.is_automated else T['no']}"))
                 pdf.cell(col_w, 5, clean(f"- {T['well']}: {T['yes'] if p.impacts_wellbeing else T['no']}"), ln=True)
-                pdf.set_x(105)
+                
+                # RIGA 2: Task Critico | Criteri Definiti
+                pdf.set_x(15)
+                pdf.cell(col_w, 5, clean(f"- {T['crit']}: {T['yes'] if p.critical_task else T['no']}"))
                 pdf.cell(col_w, 5, clean(f"- {T['def']}: {T['yes'] if p.criteria_defined else T['no']}"), ln=True)
-                pdf.set_x(105)
+                
+                # RIGA 3: Dati Sensibili | Fuori Orario
+                pdf.set_x(15)
+                pdf.cell(col_w, 5, clean(f"- {T['sens']}: {T['yes'] if p.sensitive_data else T['no']}"))
                 pdf.cell(col_w, 5, clean(f"- {T['off']}: {T['yes'] if p.outside_working_hours else T['no']}"), ln=True)
                 
-                final_y = max(y_after_left, pdf.get_y())
-                pdf.set_y(final_y + 2)
+                pdf.ln(2)
                 pdf.set_draw_color(200, 200, 200)
                 pdf.line(10, pdf.get_y(), 200, pdf.get_y())
                 pdf.ln(2)
