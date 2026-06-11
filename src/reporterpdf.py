@@ -1,6 +1,7 @@
 #src/reporterpdf.py
 from fpdf import FPDF
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class PDFReportGenerator:
     @staticmethod
@@ -73,7 +74,8 @@ class PDFReportGenerator:
         pdf.cell(0, 20, T['title'], ln=True, align='C')
         pdf.set_font("Arial", "", 10)
         
-        date_str = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        tz_italy = ZoneInfo("Europe/Rome")
+        date_str = datetime.now(tz_italy).strftime('%d/%m/%Y %H:%M:%S')
         pdf.cell(0, 5, f"{T['gen_date']} {date_str}", ln=True, align='C')
         pdf.ln(20)
 
@@ -109,9 +111,6 @@ class PDFReportGenerator:
         for node in nodes:
             p = node.profile
             if p:
-                # 1. CONTROLLO SALTO PAGINA (Anti-rottura)
-                # Se rimangono pochi millimetri a fine pagina, forziamo il 
-                # salto prima di iniziare il blocco, così non si spezza a metà.
                 if pdf.get_y() > 255:
                     pdf.add_page()
 
@@ -126,20 +125,14 @@ class PDFReportGenerator:
                 
                 col_w = 90
                 
-                # 2. COSTRUZIONE PER RIGHE (Sostituisce il vecchio set_xy)
-                # Il primo cell ha ln=0 (non va a capo), il secondo ha ln=True (va a capo)
-                
-                # RIGA 1: Automatico | Impatto Benessere
                 pdf.set_x(15)
                 pdf.cell(col_w, 5, clean(f"- {T['auto']}: {T['yes'] if p.is_automated else T['no']}"))
                 pdf.cell(col_w, 5, clean(f"- {T['well']}: {T['yes'] if p.impacts_wellbeing else T['no']}"), ln=True)
                 
-                # RIGA 2: Task Critico | Criteri Definiti
                 pdf.set_x(15)
                 pdf.cell(col_w, 5, clean(f"- {T['crit']}: {T['yes'] if p.critical_task else T['no']}"))
                 pdf.cell(col_w, 5, clean(f"- {T['def']}: {T['yes'] if p.criteria_defined else T['no']}"), ln=True)
                 
-                # RIGA 3: Dati Sensibili | Fuori Orario
                 pdf.set_x(15)
                 pdf.cell(col_w, 5, clean(f"- {T['sens']}: {T['yes'] if p.sensitive_data else T['no']}"))
                 pdf.cell(col_w, 5, clean(f"- {T['off']}: {T['yes'] if p.outside_working_hours else T['no']}"), ln=True)
