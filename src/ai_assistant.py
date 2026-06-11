@@ -94,21 +94,29 @@ class AIAssistant:
                 focus_instruction = f"\nDIRETTIVA DELL'UTENTE: L'utente ha richiesto di concentrare l'analisi specificamente su questo aspetto: '{custom_focus}'. Assicurati di dare massima priorità a questa tematica nella tua risposta.\n"
 
             equity_glossary = """
-            IMPORTANTE: Le 'Equity Action' indicate nei task sono TUTELE POSITIVE GIA' IMPLEMENTATE, non sono rischi. 
-            - 'Blind_Processing': significa che i dati sensibili sono stati anonimizzati correttamente per prevenire bias. È un'ottima pratica.
-            - 'Context_Provided': significa che al lavoratore umano è stato fornito supporto per ridurre lo stress cognitivo.
-            - 'Right_to_Appeal': significa che l'utente ha diritto di ricorso.
-            - 'Transparency': significa che i criteri decisionali sono resi pubblici e chiari.
-            - 'Informed_Consent': significa che è stato raccolto il consenso privacy.
-            Se un task ha queste azioni, DEVI elogiarlo o considerarlo sicuro, NON segnalarlo come rischio opaco o discriminatorio!
+            IMPORTANTE: Il parametro 'Equity Action' indica le azioni di equità applicate nel task. Devi distinguerle rigidamente in due categorie:
+            
+            1. EQUITA' PROCEDURALE (Azioni POSITIVE e sicure. Elogiale e NON segnalarle come rischi):
+            - 'Blind_Processing': dati sensibili anonimizzati alla fonte per prevenire bias algoritmici.
+            - 'Human_Validation' / 'Independent_Review': garanzia di supervisione umana obiettiva e indipendente.
+            - 'Context_Provided': informazioni di supporto fornite al lavoratore per ridurre il carico cognitivo.
+            - 'Right_to_Appeal' / 'Alternative_Routing': garanzia formale di ricorso o instradamento sicuro per l'utente.
+            - 'Transparency' / 'Informed_Consent': trasparenza algoritmica e consenso privacy acquisito legalmente.
+            
+            2. EQUITA' MANIPOLATIVA (Azioni a RISCHIO alterazione dati. Richiedono attenzione):
+            - 'Score_Boosting', 'Threshold_Adjustment', 'Gap_Neutralization', 'Time_Extension': queste azioni alterano matematicamente i dati per favorire una categoria. Se presenti, DEVI avvisare l'Auditor che i report KPI aziendali andranno normalizzati, altrimenti le metriche di performance risulteranno falsate (Violazione Neutralità).
             """ if lang == "ITA" else """
-            IMPORTANT: 'Equity Actions' are POSITIVE SAFEGUARDS already implemented, not risks.
-            - 'Blind_Processing': sensitive data is anonymized to prevent bias. This is a best practice.
-            - 'Context_Provided': human workers are given context to reduce cognitive stress.
-            - 'Right_to_Appeal': the user is guaranteed the right to contest.
-            - 'Transparency': decision criteria are made clear and public.
-            - 'Informed_Consent': privacy consent was properly acquired.
-            If a task has these actions, praise it or consider it safe. DO NOT flag them as opaque or discriminatory risks!
+            IMPORTANT: The 'Equity Action' parameter indicates the equity actions applied to the task. You must strictly distinguish them into two categories:
+            
+            1. PROCEDURAL FAIRNESS (POSITIVE and safe actions. Praise them and DO NOT flag them as risks):
+            - 'Blind_Processing': sensitive data anonymized at the source to prevent algorithmic bias.
+            - 'Human_Validation' / 'Independent_Review': guarantee of objective and independent human supervision.
+            - 'Context_Provided': support information provided to the worker to reduce cognitive load.
+            - 'Right_to_Appeal' / 'Alternative_Routing': formal guarantee of appeal or safe routing for the user.
+            - 'Transparency' / 'Informed_Consent': algorithmic transparency and legally acquired privacy consent.
+            
+            2. MANIPULATIVE FAIRNESS (Actions at RISK of data alteration. Require attention):
+            - 'Score_Boosting', 'Threshold_Adjustment', 'Gap_Neutralization', 'Time_Extension': these actions mathematically alter data to favor a category. If present, you MUST warn the Auditor that corporate KPI reports will need to be normalized, otherwise performance metrics will be distorted (Neutrality Violation).
             """
 
             prompt = f"""

@@ -55,7 +55,7 @@ translations = {
         'success': "Analisi Completata!",
         'viol_detail': "Dettaglio Regole Violate",
         'no_viol': "Nessuna violazione rilevata. Il processo rispetta i criteri definiti.",
-        'viol_help': "Numero di violazioni rilevate, visibili nei pannelli sottostanti.",
+        'viol_help': "Numero delle violazioni rilevate.",
         'ai_header': "Analisi dell'Assistente AI",
         'reeng_header': "Proposte di Reingegnerizzazione (Modello TO-BE)",
         'export_header': "Esporta Dati",
@@ -64,7 +64,7 @@ translations = {
         'verify_header': "Verifica Parametri Inseriti",
         'eps_label': "Punteggio EPS",
         'eri_label': "Indice ERI",
-        'eps_help': "Ethical Process Score: Livello di conformità globale. 1.00 è il massimo.",
+        'eps_help': "Ethical Process Score: Livello di conformità globale. Il valore massimo è 1.00.",
         'eri_help': "Ethical Risk Index: Rapporto tra violazioni e rischio potenziale massimo.",
         'rule_prefix': "Regola",
         'rules': {
@@ -295,7 +295,6 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
     
     st.divider()
     st.subheader(T['viol_detail'])
-    st.caption(T['viol_help']) 
 
     v_map = {}
     for v in data['violations']:
