@@ -138,22 +138,17 @@ class BpmnParser:
         def str_to_bool(val): return str(val).lower() == 'true'
 
         try:
-            # Pulizia per acc_owner
             raw_acc_owner = ethic_tag.get('acc_owner')
             clean_acc_owner = raw_acc_owner if raw_acc_owner and raw_acc_owner.lower() not in ["none", "null", ""] else None
 
-            # Pulizia per equity_note
             raw_equity_note = ethic_tag.get('equity_note')
             clean_equity_note = raw_equity_note if raw_equity_note and raw_equity_note.upper() != "NULL" else None
 
-            # Estrazione e gestione della stringa/lista beneficiary
             raw_beneficiary = ethic_tag.get('beneficiary', '')
             parsed_beneficiaries = [b.strip() for b in raw_beneficiary.split(',')] if raw_beneficiary else []
 
-            # FIX: Gestione ultra-sicura dell'Enum EquityAction
             raw_eq = ethic_tag.get('equity_action', 'NONE').upper()
             try:
-                # Cerchiamo l'Enum direttamente dal nome salvato
                 parsed_equity = EquityAction[raw_eq] 
             except KeyError:
                 parsed_equity = EquityAction.NONE

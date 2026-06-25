@@ -24,30 +24,24 @@ class BpmnAutoFixer:
                 if node_id in node_dict:
                     node = node_dict[node_id]
                     if node.profile:
-                        # Se è critico ma manca il responsabile (Regola 6/7), forziamo un ruolo di garanzia
                         if node.profile.critical_task and (not node.profile.acc_owner or node.profile.acc_owner.lower() == "null"):
                             node.profile.acc_owner = "Compliance_Officer"
                         
-                        # Se impatta sul fuori orario (Regola 11/12), lo disattiviamo
                         if node.profile.outside_working_hours:
                             node.profile.outside_working_hours = False
                             
-                        # Se mancano i criteri definiti, li diamo per definiti se c'è Equity Action
                         if node.profile.equity_action != EquityAction.NONE:
                             node.profile.criteria_defined = True
 
-                        # MODIFICA XML 
                         ext_elem = elem.find('bpmn:extensionElements', namespaces)
                         if ext_elem is None:
                             ext_elem = ET.Element('{http://www.omg.org/spec/BPMN/20100524/MODEL}extensionElements')
-                            # Lo inseriamo all'inizio del blocco del task
                             elem.insert(0, ext_elem)
 
                         old_profile = ext_elem.find('{http://ethicbpmn.org/schema/1.0/ethic}TaskProfile')
                         if old_profile is not None:
                             ext_elem.remove(old_profile)
 
-                        # 1. COSTRUZIONE SICURA DELLA MATRICE (Parametri Obbligatori e Booleani)
                         attrs = {
                             'type': str(node.profile.type or "Execution"),
                             'actor': str(node.profile.actor or ""),
@@ -61,23 +55,19 @@ class BpmnAutoFixer:
                             'default_action': str(node.profile.default_action).lower() # ORA PRESENTE!
                         }
 
-                        # 2. INIEZIONE PARAMETRI OPZIONALI E LISTE
-                        # Acc_owner
                         if node.profile.acc_owner and str(node.profile.acc_owner).lower() not in ["null", "none", ""]:
                             attrs['acc_owner'] = str(node.profile.acc_owner)
                             
-                        # Equity Note (ORA PRESENTE!)
                         if node.profile.equity_note and str(node.profile.equity_note).upper() != "NULL":
                             attrs['equity_note'] = str(node.profile.equity_note)
                             
-                        # Beneficiary (ORA PRESENTE E GESTITO COME LISTA O STRINGA)
                         if node.profile.beneficiary:
                             if isinstance(node.profile.beneficiary, list):
                                 attrs['beneficiary'] = ",".join(node.profile.beneficiary)
                             else:
                                 attrs['beneficiary'] = str(node.profile.beneficiary)
 
-                        # Crezione nuovo tag XML con i parametri corretti
+                        # Crezione tag XML con i parametri corretti
                         new_profile = ET.Element('{http://ethicbpmn.org/schema/1.0/ethic}TaskProfile', attrs)
                         ext_elem.append(new_profile)
 
