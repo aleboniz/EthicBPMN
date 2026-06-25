@@ -196,39 +196,58 @@ elif st.session_state.stage == 'validation':
                 active_rules.append(r_id)
     
         for node in st.session_state.nodes:
-            if hasattr(node, 'profile') and node.profile:
-                st.markdown(f"### {T['element']}: `{node.name or node.id}`")
-                st.caption(f"BPMN Type: {node.type_node}")
-                
-                b1, b2, b3, b4 = st.columns(4)
-                node.profile.is_automated = b1.checkbox(T['node_auto'], value=node.profile.is_automated, key=f"a_{node.id}")
-                node.profile.critical_task = b2.checkbox(T['node_crit'], value=node.profile.critical_task, key=f"c_{node.id}")
-                node.profile.sensitive_data = b3.checkbox(T['node_sens'], value=node.profile.sensitive_data, key=f"s_{node.id}")
-                node.profile.criteria_defined = b4.checkbox(T['node_def'], value=node.profile.criteria_defined, key=f"cd_{node.id}")
-                
-                node.profile.impacts_wellbeing = b1.checkbox(T['node_well'], value=node.profile.impacts_wellbeing, key=f"w_{node.id}")
-                node.profile.outside_working_hours = b2.checkbox(T['node_off'], value=node.profile.outside_working_hours, key=f"o_{node.id}")
-                node.profile.default_action = b3.checkbox(T['node_da'], value=node.profile.default_action, key=f"da_{node.id}")
-                has_acc = b4.checkbox(T['node_acc'], value=bool(node.profile.acc_owner), key=f"h_acc_{node.id}")
+                if hasattr(node, 'profile') and node.profile:
+                    st.markdown(f"### {T['element']}: `{node.name or node.id}`")
+                    st.caption(f"BPMN Type: {node.type_node}")
+                    
+                    b1, b2, b3, b4 = st.columns(4)
+                    node.profile.is_automated = b1.checkbox(T['node_auto'], value=node.profile.is_automated, key=f"a_{node.id}")
+                    node.profile.critical_task = b2.checkbox(T['node_crit'], value=node.profile.critical_task, key=f"c_{node.id}")
+                    node.profile.sensitive_data = b3.checkbox(T['node_sens'], value=node.profile.sensitive_data, key=f"s_{node.id}")
+                    node.profile.criteria_defined = b4.checkbox(T['node_def'], value=node.profile.criteria_defined, key=f"cd_{node.id}")
+                    
+                    node.profile.impacts_wellbeing = b1.checkbox(T['node_well'], value=node.profile.impacts_wellbeing, key=f"w_{node.id}")
+                    node.profile.outside_working_hours = b2.checkbox(T['node_off'], value=node.profile.outside_working_hours, key=f"o_{node.id}")
+                    node.profile.default_action = b3.checkbox(T['node_da'], value=node.profile.default_action, key=f"da_{node.id}")
+                    # has_acc = b4.checkbox(T['node_acc'], value=bool(node.profile.acc_owner), key=f"h_acc_{node.id}")
 
-                d1, d2 = st.columns(2)
-                node.profile.type = d1.selectbox(T['node_type'], ["Decision", "Assignment", "Execution", "Communication", "Evaluation"], index=2, key=f"t_{node.id}")
-                eq_options = [e.name for e in EquityAction]
-                current_eq_name = node.profile.equity_action.name if hasattr(node.profile.equity_action, 'name') else "NONE"
-                selected_eq = d2.selectbox(T['equity_label'], eq_options, index=eq_options.index(current_eq_name) if current_eq_name in eq_options else 0, key=f"eq_{node.id}")
-                node.profile.equity_action = EquityAction[selected_eq]
+                    # --- INIZIO MODIFICA REGOLA 7 ---
+                    # 1. Controlliamo se c'è un valore testuale valido (escludendo i "null" testuali dell'IA)
+                    is_valid_owner = isinstance(node.profile.acc_owner, str) and node.profile.acc_owner.strip().lower() not in ["null", "none", "", "false"]
+                    
+                    # 2. Il checkbox funge da attivatore nella colonna b4
+                    has_acc = b4.checkbox(T['node_acc'], value=is_valid_owner, key=f"h_acc_{node.id}")
+                    
+                    if has_acc:
+                        # Se spuntato, recupera la stringa o imposta vuoto
+                        current_owner = node.profile.acc_owner if is_valid_owner else ""
+                        # Mostra il campo di testo impilato in b4
+                        acc_input = b4.text_input("Ruolo Responsabile:", value=current_owner, key=f"t_acc_{node.id}")
+                        # Salva la stringa (se l'utente digita qualcosa)
+                        node.profile.acc_owner = acc_input if acc_input.strip() != "" else None
+                    else:
+                        # Se rimosso, pulisce il modello
+                        node.profile.acc_owner = None
+                    # --- FINE MODIFICA REGOLA 7 ---
 
-                i1, i2 = st.columns(2)
-                node.profile.actor = i1.text_input(T['node_act'], value=node.profile.actor or "", key=f"act_{node.id}")
-                node.profile.beneficiary = i2.text_input(T['node_ben'], value=node.profile.beneficiary or "", key=f"ben_{node.id}")
+                    d1, d2 = st.columns(2)
+                    node.profile.type = d1.selectbox(T['node_type'], ["Decision", "Assignment", "Execution", "Communication", "Evaluation"], index=2, key=f"t_{node.id}")
+                    eq_options = [e.name for e in EquityAction]
+                    current_eq_name = node.profile.equity_action.name if hasattr(node.profile.equity_action, 'name') else "NONE"
+                    selected_eq = d2.selectbox(T['equity_label'], eq_options, index=eq_options.index(current_eq_name) if current_eq_name in eq_options else 0, key=f"eq_{node.id}")
+                    node.profile.equity_action = EquityAction[selected_eq]
 
-                equity_options = ["NULL", "HEALTH_RECOVERY", "CAREGIVING", "DISABILITY_SUPPORT"]
-                current_index = 0
-                if node.profile.equity_note in equity_options:
-                    current_index = equity_options.index(node.profile.equity_note)
-                
-                node.profile.equity_note = st.selectbox(T['node_eqn'], options=equity_options, index=current_index, key=f"eqn_{node.id}")
-                st.markdown("---")
+                    i1, i2 = st.columns(2)
+                    node.profile.actor = i1.text_input(T['node_act'], value=node.profile.actor or "", key=f"act_{node.id}")
+                    node.profile.beneficiary = i2.text_input(T['node_ben'], value=node.profile.beneficiary or "", key=f"ben_{node.id}")
+
+                    equity_options = ["NULL", "HEALTH_RECOVERY", "CAREGIVING", "DISABILITY_SUPPORT"]
+                    current_index = 0
+                    if node.profile.equity_note in equity_options:
+                        current_index = equity_options.index(node.profile.equity_note)
+                    
+                    node.profile.equity_note = st.selectbox(T['node_eqn'], options=equity_options, index=current_index, key=f"eqn_{node.id}")
+                    st.markdown("---")
         
         submitted = st.form_submit_button(T['btn_audit'], use_container_width=True)
     
