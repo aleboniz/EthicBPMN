@@ -169,10 +169,10 @@ if st.session_state.stage == 'upload' and process_button:
     if uploaded_file is not None:
         raw_content = uploaded_file.read()
         st.session_state.bpmn_xml_raw = raw_content.decode("utf-8")
-        with open("temp.bpmn", "wb") as f:
+        with open("temp_process.bpmn", "wb") as f:
             f.write(raw_content)
         
-        parser = BpmnParser("temp.bpmn")
+        parser = BpmnParser("temp_process.bpmn")
         nodes = parser.parse()
         ai_assistant = AIAssistant() 
         completer = AICompleter(ai_assistant)
@@ -287,7 +287,7 @@ elif st.session_state.stage == 'dashboard' and st.session_state.analysis_data:
     st.components.v1.html(js_scroll, height=0)
 
     data = st.session_state.analysis_data
-    if not os.path.exists("temp_process.bpmn") and st.session_state.bpmn_xml_raw:
+    if st.session_state.bpmn_xml_raw:
         with open("temp_process.bpmn", "w", encoding="utf-8") as f:
             f.write(st.session_state.bpmn_xml_raw) 
 
