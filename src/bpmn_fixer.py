@@ -1,4 +1,3 @@
-# src/bpmn_fixer.py
 import xml.etree.ElementTree as ET
 from src.models import BpmnNode, EquityAction
 
@@ -25,15 +24,15 @@ class BpmnAutoFixer:
                 if node_id in node_dict:
                     node = node_dict[node_id]
                     if node.profile:
-                        # Se è critico ma manca il responsabile (Regola 6), forziamo un ruolo di garanzia
-                        if node.profile.critical_task and (not node.profile.acc_owner or node.profile.acc_owner == "Null"):
+                        # Se è critico ma manca il responsabile (Regola 6/7), forziamo un ruolo di garanzia
+                        if node.profile.critical_task and (not node.profile.acc_owner or node.profile.acc_owner.lower() == "null"):
                             node.profile.acc_owner = "Compliance_Officer"
                         
-                        # Se impatta sul fuori orario (Regola 11), lo disattiviamo
+                        # Se impatta sul fuori orario (Regola 11/12), lo disattiviamo
                         if node.profile.outside_working_hours:
                             node.profile.outside_working_hours = False
                             
-                        # Se mancano i criteri definiti (Regola 1), li diamo per definiti
+                        # Se mancano i criteri definiti, li diamo per definiti se c'è Equity Action
                         if node.profile.equity_action != EquityAction.NONE:
                             node.profile.criteria_defined = True
 
@@ -48,19 +47,38 @@ class BpmnAutoFixer:
                         if old_profile is not None:
                             ext_elem.remove(old_profile)
 
-                        # Crezione nuovo tag XML con i parametri corretti
-                        new_profile = ET.Element('{http://ethicbpmn.org/schema/1.0/ethic}TaskProfile', {
-                            'type': node.profile.type,
-                            'actor': node.profile.actor,
+                        # 1. COSTRUZIONE SICURA DELLA MATRICE (Parametri Obbligatori e Booleani)
+                        attrs = {
+                            'type': str(node.profile.type or "Execution"),
+                            'actor': str(node.profile.actor or ""),
                             'is_automated': str(node.profile.is_automated).lower(),
-                            'acc_owner': str(node.profile.acc_owner),
                             'critical_task': str(node.profile.critical_task).lower(),
                             'sensitive_data': str(node.profile.sensitive_data).lower(),
-                            'equity_action': node.profile.equity_action.value,
+                            'equity_action': str(node.profile.equity_action.name),
                             'criteria_defined': str(node.profile.criteria_defined).lower(),
                             'impacts_wellbeing': str(node.profile.impacts_wellbeing).lower(),
-                            'outside_working_hours': str(node.profile.outside_working_hours).lower()
-                        })
+                            'outside_working_hours': str(node.profile.outside_working_hours).lower(),
+                            'default_action': str(node.profile.default_action).lower() # ORA PRESENTE!
+                        }
+
+                        # 2. INIEZIONE PARAMETRI OPZIONALI E LISTE
+                        # Acc_owner
+                        if node.profile.acc_owner and str(node.profile.acc_owner).lower() not in ["null", "none", ""]:
+                            attrs['acc_owner'] = str(node.profile.acc_owner)
+                            
+                        # Equity Note (ORA PRESENTE!)
+                        if node.profile.equity_note and str(node.profile.equity_note).upper() != "NULL":
+                            attrs['equity_note'] = str(node.profile.equity_note)
+                            
+                        # Beneficiary (ORA PRESENTE E GESTITO COME LISTA O STRINGA)
+                        if node.profile.beneficiary:
+                            if isinstance(node.profile.beneficiary, list):
+                                attrs['beneficiary'] = ",".join(node.profile.beneficiary)
+                            else:
+                                attrs['beneficiary'] = str(node.profile.beneficiary)
+
+                        # Crezione nuovo tag XML con i parametri corretti
+                        new_profile = ET.Element('{http://ethicbpmn.org/schema/1.0/ethic}TaskProfile', attrs)
                         ext_elem.append(new_profile)
 
         # Salva nuovo file
