@@ -209,21 +209,7 @@ elif st.session_state.stage == 'validation':
                     node.profile.impacts_wellbeing = b1.checkbox(T['node_well'], value=node.profile.impacts_wellbeing, key=f"w_{node.id}")
                     node.profile.outside_working_hours = b2.checkbox(T['node_off'], value=node.profile.outside_working_hours, key=f"o_{node.id}")
                     node.profile.default_action = b3.checkbox(T['node_da'], value=node.profile.default_action, key=f"da_{node.id}")
-                    # has_acc = b4.checkbox(T['node_acc'], value=bool(node.profile.acc_owner), key=f"h_acc_{node.id}")
-
-                    # --- INIZIO MODIFICA REGOLA 7 (Solo Campo Testuale) ---
-                    # 1. Recuperiamo il valore esistente, ignorando i finti "null" dell'IA
-                    current_owner = ""
-                    if isinstance(node.profile.acc_owner, str) and node.profile.acc_owner.strip().lower() not in ["null", "none", "false", ""]:
-                        current_owner = node.profile.acc_owner
-                    
-                    # 2. Inseriamo direttamente il text_input nella colonna b4
-                    acc_input = b4.text_input(T['node_acc'], value=current_owner, key=f"t_acc_{node.id}")
-                    
-                    # 3. Salviamo nel modello Pydantic (stringa se compilato, altrimenti None)
-                    node.profile.acc_owner = acc_input if acc_input.strip() != "" else None
-                    # --- FINE MODIFICA REGOLA 7 ---
-
+                 
                     d1, d2 = st.columns(2)
                     node.profile.type = d1.selectbox(T['node_type'], ["Decision", "Assignment", "Execution", "Communication", "Evaluation"], index=2, key=f"t_{node.id}")
                     eq_options = [e.name for e in EquityAction]
@@ -235,12 +221,20 @@ elif st.session_state.stage == 'validation':
                     node.profile.actor = i1.text_input(T['node_act'], value=node.profile.actor or "", key=f"act_{node.id}")
                     node.profile.beneficiary = i2.text_input(T['node_ben'], value=node.profile.beneficiary or "", key=f"ben_{node.id}")
 
+                    e1, e2 = st.columns(2)
+                    current_owner = ""
+                    if isinstance(node.profile.acc_owner, str) and node.profile.acc_owner.strip().lower() not in ["null", "none", "false", ""]:
+                        current_owner = node.profile.acc_owner
+                    acc_input = e1.text_input(T['node_acc'], value=current_owner, key=f"t_acc_{node.id}")
+                    node.profile.acc_owner = acc_input if acc_input.strip() != "" else None
+
                     equity_options = ["NULL", "HEALTH_RECOVERY", "CAREGIVING", "DISABILITY_SUPPORT"]
                     current_index = 0
                     if node.profile.equity_note in equity_options:
                         current_index = equity_options.index(node.profile.equity_note)
                     
-                    node.profile.equity_note = st.selectbox(T['node_eqn'], options=equity_options, index=current_index, key=f"eqn_{node.id}")
+                    node.profile.equity_note = e2.selectbox(T['node_eqn'], options=equity_options, index=current_index, key=f"eqn_{node.id}")
+                    
                     st.markdown("---")
         
         submitted = st.form_submit_button(T['btn_audit'], use_container_width=True)
