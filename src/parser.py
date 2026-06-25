@@ -1,6 +1,7 @@
 # src/parser.py
 import xml.etree.ElementTree as ET
 from src.models import BpmnNode, TaskProfile
+from src.models import BpmnNode, TaskProfile, EquityAction
 
 class BpmnParser:
     def __init__(self, file_path: str):
@@ -137,19 +138,41 @@ class BpmnParser:
         def str_to_bool(val): return str(val).lower() == 'true'
 
         try:
+            # Pulizia per acc_owner
+            raw_acc_owner = ethic_tag.get('acc_owner')
+            clean_acc_owner = raw_acc_owner if raw_acc_owner and raw_acc_owner.lower() not in ["none", "null", ""] else None
+
+            # Pulizia per equity_note
+            raw_equity_note = ethic_tag.get('equity_note')
+            clean_equity_note = raw_equity_note if raw_equity_note and raw_equity_note.upper() != "NULL" else None
+
+            # Estrazione e gestione della stringa/lista beneficiary
+            raw_beneficiary = ethic_tag.get('beneficiary', '')
+            parsed_beneficiaries = [b.strip() for b in raw_beneficiary.split(',')] if raw_beneficiary else []
+
+            # FIX: Gestione ultra-sicura dell'Enum EquityAction
+            raw_eq = ethic_tag.get('equity_action', 'NONE').upper()
+            try:
+                # Cerchiamo l'Enum direttamente dal nome salvato
+                parsed_equity = EquityAction[raw_eq] 
+            except KeyError:
+                parsed_equity = EquityAction.NONE
+
             return TaskProfile(
                 type=ethic_tag.get('type', 'Execution'),
                 actor=ethic_tag.get('actor', 'System'),
                 is_automated=str_to_bool(ethic_tag.get('is_automated')),
-                acc_owner=ethic_tag.get('acc_owner'),
+                acc_owner=clean_acc_owner,
                 critical_task=str_to_bool(ethic_tag.get('critical_task')),
                 sensitive_data=str_to_bool(ethic_tag.get('sensitive_data')),
-                equity_action=ethic_tag.get('equity_action', 'None'),
-                equity_note=ethic_tag.get('equity_note'),
+                equity_action=parsed_equity, # Passiamo l'oggetto Enum, non la stringa!
+                equity_note=clean_equity_note,
                 criteria_defined=str_to_bool(ethic_tag.get('criteria_defined')),
                 impacts_wellbeing=str_to_bool(ethic_tag.get('impacts_wellbeing')),
                 outside_working_hours=str_to_bool(ethic_tag.get('outside_working_hours')),
-                default_action=str_to_bool(ethic_tag.get('default_action'))
+                default_action=str_to_bool(ethic_tag.get('default_action')),
+                beneficiary=parsed_beneficiaries
             )
-        except Exception:
+        except Exception as e:
+            print(f"Errore durante il parsing del profilo etico: {e}")
             return None
