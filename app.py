@@ -211,23 +211,17 @@ elif st.session_state.stage == 'validation':
                     node.profile.default_action = b3.checkbox(T['node_da'], value=node.profile.default_action, key=f"da_{node.id}")
                     # has_acc = b4.checkbox(T['node_acc'], value=bool(node.profile.acc_owner), key=f"h_acc_{node.id}")
 
-                    # --- INIZIO MODIFICA REGOLA 7 ---
-                    # 1. Controlliamo se c'è un valore testuale valido (escludendo i "null" testuali dell'IA)
-                    is_valid_owner = isinstance(node.profile.acc_owner, str) and node.profile.acc_owner.strip().lower() not in ["null", "none", "", "false"]
+                    # --- INIZIO MODIFICA REGOLA 7 (Solo Campo Testuale) ---
+                    # 1. Recuperiamo il valore esistente, ignorando i finti "null" dell'IA
+                    current_owner = ""
+                    if isinstance(node.profile.acc_owner, str) and node.profile.acc_owner.strip().lower() not in ["null", "none", "false", ""]:
+                        current_owner = node.profile.acc_owner
                     
-                    # 2. Il checkbox funge da attivatore nella colonna b4
-                    has_acc = b4.checkbox(T['node_acc'], value=is_valid_owner, key=f"h_acc_{node.id}")
+                    # 2. Inseriamo direttamente il text_input nella colonna b4
+                    acc_input = b4.text_input(T['node_acc'], value=current_owner, key=f"t_acc_{node.id}")
                     
-                    if has_acc:
-                        # Se spuntato, recupera la stringa o imposta vuoto
-                        current_owner = node.profile.acc_owner if is_valid_owner else ""
-                        # Mostra il campo di testo impilato in b4
-                        acc_input = b4.text_input("Ruolo Responsabile:", value=current_owner, key=f"t_acc_{node.id}")
-                        # Salva la stringa (se l'utente digita qualcosa)
-                        node.profile.acc_owner = acc_input if acc_input.strip() != "" else None
-                    else:
-                        # Se rimosso, pulisce il modello
-                        node.profile.acc_owner = None
+                    # 3. Salviamo nel modello Pydantic (stringa se compilato, altrimenti None)
+                    node.profile.acc_owner = acc_input if acc_input.strip() != "" else None
                     # --- FINE MODIFICA REGOLA 7 ---
 
                     d1, d2 = st.columns(2)
