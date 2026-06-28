@@ -87,13 +87,7 @@ class AIAssistant:
 
         scope_text = self._get_active_rule_names(active_rules, lang=lang)
 
-        if lang == "ITA":
-            active_rules_summary = f"SCOPE DI AUDIT (REGOLE DA CONTROLLARE):\nL'analisi deve limitarsi ESCLUSIVAMENTE a queste tematiche:\n- " + "\n- ".join(scope_text.split(", "))
-            focus_instruction = ""
-            if custom_focus.strip():
-                focus_instruction = f"\nDIRETTIVA DELL'UTENTE: L'utente ha richiesto di concentrare l'analisi specificamente su questo aspetto: '{custom_focus}'. Assicurati di dare massima priorità a questa tematica nella tua risposta.\n"
-
-            equity_glossary = """
+        equity_glossary = """
             IMPORTANTE: Il parametro 'Equity Action' indica le azioni di equità applicate nel task. Devi distinguerle rigidamente in due categorie:
             
             1. EQUITA' PROCEDURALE (Azioni POSITIVE e sicure. Elogiale e NON segnalarle come rischi):
@@ -118,6 +112,12 @@ class AIAssistant:
             2. MANIPULATIVE FAIRNESS (Actions at RISK of data alteration. Require attention):
             - 'Score_Boosting', 'Threshold_Adjustment', 'Gap_Neutralization', 'Time_Extension': these actions mathematically alter data to favor a category. If present, you MUST warn the Auditor that corporate KPI reports will need to be normalized, otherwise performance metrics will be distorted (Neutrality Violation).
             """
+
+        if lang == "ITA":
+            active_rules_summary = f"SCOPE DI AUDIT (REGOLE DA CONTROLLARE):\nL'analisi deve limitarsi ESCLUSIVAMENTE a queste tematiche:\n- " + "\n- ".join(scope_text.split(", "))
+            focus_instruction = ""
+            if custom_focus.strip():
+                focus_instruction = f"\nDIRETTIVA DELL'UTENTE: L'utente ha richiesto di concentrare l'analisi specificamente su questo aspetto: '{custom_focus}'. Assicurati di dare massima priorità a questa tematica nella tua risposta.\n"
 
             prompt = f"""
             Sei un Auditor che analizza i principi etici dei processi aziendali (BPMN).
